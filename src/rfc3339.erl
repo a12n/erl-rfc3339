@@ -359,6 +359,8 @@ parse_offset(_BadStr, _Cont) -> throw(badstr).
 
 -spec remove_offset(datetime(), offset()) -> datetime().
 
+remove_offset(DateTime, {0, 0}) -> DateTime;
+
 remove_offset(DateTime, {Hours, Minutes}) ->
     calendar:gregorian_seconds_to_datetime(
       calendar:datetime_to_gregorian_seconds(DateTime) -
