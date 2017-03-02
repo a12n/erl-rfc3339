@@ -131,7 +131,7 @@ parse_datetime(Str) ->
 
 -spec parse_local_datetime(iodata()) ->
                                   {datetime(), offset() | undefined,
-                                   fraction(), fraction_unit()}.
+                                   fraction() | undefined, fraction_unit()}.
 
 parse_local_datetime(Str) when is_binary(Str) ->
     parse_date(
@@ -167,7 +167,7 @@ parse_local_datetime(Str) when is_binary(Str) ->
                           end
                          );
                    (OffsetStr, Time) ->
-                        Frac = 0,
+                        Frac = undefined,
                         Unit = microsecond,
                         parse_offset(
                           OffsetStr,
