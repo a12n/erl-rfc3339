@@ -143,13 +143,21 @@ parse_local_datetime(Str) when is_binary(Str) ->
                 fun(<<$., FracStr/bytes>>, Time) ->
                         parse_frac(
                           FracStr,
-                          fun(OffsetStr, {FracLen, Frac}) ->
-                                  Unit = case FracLen of
-                                             3 -> millisecond;
-                                             6 -> microsecond;
-                                             9 -> nanosecond;
-                                             _ -> throw(badfrac)
-                                         end,
+                          fun(OffsetStr, {FracLen, RawFrac}) ->
+                                  {Frac, Unit} =
+                                      case FracLen of
+                                          %% FIXME
+                                          1 -> {RawFrac * 100, millisecond};
+                                          2 -> {RawFrac * 10, millisecond};
+                                          3 -> {RawFrac, millisecond};
+                                          4 -> {RawFrac * 100, microsecond};
+                                          5 -> {RawFrac * 10, microsecond};
+                                          6 -> {RawFrac, microsecond};
+                                          7 -> {RawFrac * 100, nanosecond};
+                                          8 -> {RawFrac * 10, nanosecond};
+                                          9 -> {RawFrac, nanosecond};
+                                          _ -> throw(badfrac)
+                                      end,
                                   parse_offset(
                                     OffsetStr,
                                     fun(_EmptyStr = <<>>, Offset) -> {{Date, Time}, Offset, Frac, Unit};
