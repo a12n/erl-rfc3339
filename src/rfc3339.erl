@@ -8,10 +8,10 @@
               error/0]).
 
 %% API
--export([format_datetime/1, format_datetime/2,
-         format_local_datetime/2, format_local_datetime/3,
+-export([format_datetime/1, format_datetime/2, format_datetime/3,
+         format_local_datetime/2, format_local_datetime/3, format_local_datetime/4,
          format_date/1,
-         format_time/1, format_time/2]).
+         format_time/1, format_time/2, format_time/3]).
 
 %% API
 -export([parse_datetime/1,
