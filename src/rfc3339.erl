@@ -451,10 +451,15 @@ parse_time_1_test_() ->
     ].
 
 parse_local_datetime_1_test_() ->
-    [ ?_assertMatch({{{2017, 3, 3}, {16, 31, 37}}, {3, 0}, 523800, microsecond},
+    DateTime = {{2017, 3, 3}, {16, 31, 37}},
+    Offset = {3, 0},
+    Frac = 523800,
+    [ ?_assertMatch({DateTime, Offset, Frac, microsecond},
                     parse_local_datetime(<<"2017-03-03T16:31:37.5238+03:00">>)),
-      ?_assertMatch({{{2017, 3, 3}, {16, 31, 37}}, {3, 0}, undefined, _Unit},
-                    parse_local_datetime(<<"2017-03-03T16:31:37+03:00">>))
+      ?_assertMatch({DateTime, Offset, undefined, _Unit},
+                    parse_local_datetime(<<"2017-03-03T16:31:37+03:00">>)),
+      ?_assertMatch({DateTime, undefined, Frac, microsecond},
+                    parse_local_datetime(<<"2017-03-03T16:31:37.5238-00:00">>))
     ].
 
 -endif.
