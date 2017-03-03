@@ -468,7 +468,8 @@ parse_datetime_1_test_() ->
       ?_assertMatch({DateTime, 123456700, nanosecond}, parse_datetime(<<"2017-03-03T13:31:37.1234567Z">>)),
       ?_assertMatch({DateTime, 123456780, nanosecond}, parse_datetime(<<"2017-03-03T13:31:37.12345678Z">>)),
       ?_assertMatch({DateTime, 123456789, nanosecond}, parse_datetime(<<"2017-03-03T13:31:37.123456789Z">>)),
-      ?_assertThrow(badfrac, parse_datetime(<<"2017-03-03T13:31:37.1234567890Z">>))
+      ?_assertThrow(badfrac, parse_datetime(<<"2017-03-03T13:31:37.1234567890Z">>)),
+      ?_assertThrow(badarg, parse_datetime(<<"2017-03-03T13:31:37.Z">>))
     ].
 
 parse_local_datetime_1_test_() ->
