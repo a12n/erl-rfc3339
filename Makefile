@@ -23,6 +23,7 @@ shell: $(REBAR)
 test: $(REBAR)
 	$(REBAR) eunit
 	$(REBAR) proper
+	$(REBAR) cover
 
 
 ./rebar3:
