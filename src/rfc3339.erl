@@ -23,12 +23,12 @@
 %%% Types
 %%%===================================================================
 
--type year() :: calendar:year().
--type month() :: calendar:month().
--type day() :: calendar:day().
+-type year() :: 0..9999.
+-type month() :: 1..12.
+-type day() :: 1..31.
 
--type hour() :: calendar:hour().
--type minute() :: calendar:minute().
+-type hour() :: 0..23.
+-type minute() :: 0..59.
 -type second() :: 0..60.                        % Allows leap second
 
 -type fraction() :: non_neg_integer().
