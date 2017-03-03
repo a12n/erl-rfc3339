@@ -40,7 +40,7 @@
 
 -type offset() :: {-23..23, minute()}.
 
--type error() :: badstr | baddate | badtime | badfrac | badoffset.
+-type error() :: badarg | baddate | badtime | badfrac | badoffset.
 
 %%%===================================================================
 %%% API
@@ -154,7 +154,7 @@ parse_local_datetime(Str) when is_binary(Str) ->
                                   parse_offset(
                                     OffsetStr,
                                     fun(_EmptyStr = <<>>, Offset) -> {{Date, Time}, Offset, Frac, Unit};
-                                       (_StrLeft, _Offset) -> throw(badstr)
+                                       (_StrLeft, _Offset) -> throw(badarg)
                                     end
                                    )
                           end
@@ -165,12 +165,12 @@ parse_local_datetime(Str) when is_binary(Str) ->
                         parse_offset(
                           OffsetStr,
                           fun(_EmptyStr = <<>>, Offset) -> {{Date, Time}, Offset, Frac, Unit};
-                             (_StrLeft, _Offset) -> throw(badstr)
+                             (_StrLeft, _Offset) -> throw(badarg)
                           end
                          )
                 end
                );
-         (_BadStr, _Date) -> throw(badstr)
+         (_BadStr, _Date) -> throw(badarg)
       end
      );
 
@@ -185,7 +185,7 @@ parse_date(Str) when is_binary(Str) ->
     parse_date(
       Str,
       fun(_EmptyStr = <<>>, Date) -> Date;
-         (_StrLeft, _Date) -> throw(badstr)
+         (_StrLeft, _Date) -> throw(badarg)
       end
      );
 
@@ -199,7 +199,7 @@ parse_time(Str) when is_binary(Str) ->
     parse_time(
       Str,
       fun(_EmptyStr = <<>>, Time) -> Time;
-         (_StrLeft, _Time) -> throw(badstr)
+         (_StrLeft, _Time) -> throw(badarg)
       end
      );
 
@@ -290,7 +290,7 @@ parse_date(<<YearStr:4/bytes, $-,
         false -> throw(baddate)
     end;
 
-parse_date(_BadStr, _Cont) -> throw(badstr).
+parse_date(_BadStr, _Cont) -> throw(badarg).
 
 %%--------------------------------------------------------------------
 
@@ -311,7 +311,7 @@ parse_time(<<HourStr:2/bytes, $:,
         _BadTime -> throw(badtime)
     end;
 
-parse_time(_BadStr, _Cont) -> throw(badstr).
+parse_time(_BadStr, _Cont) -> throw(badarg).
 
 %%--------------------------------------------------------------------
 
@@ -328,7 +328,7 @@ parse_frac(<<D, Str/bytes>>, {FracLen, Frac}, Cont) when D >= $0, D =< $9 ->
 
 parse_frac(Str, Ans = {FracLen, _Frac}, Cont) when FracLen > 0 -> Cont(Str, Ans);
 
-parse_frac(_Str, _Ans, _Cont) -> throw(badstr).
+parse_frac(_Str, _Ans, _Cont) -> throw(badarg).
 
 %%--------------------------------------------------------------------
 
@@ -347,7 +347,7 @@ parse_offset(<<Sign, HourStr:2/bytes, $:, MinuteStr:2/bytes, Str/bytes>>, Cont) 
         $+ -> Cont(Str, {Hour, Minute})
     end;
 
-parse_offset(_BadStr, _Cont) -> throw(badstr).
+parse_offset(_BadStr, _Cont) -> throw(badarg).
 
 %%--------------------------------------------------------------------
 
