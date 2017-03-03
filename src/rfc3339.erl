@@ -442,12 +442,24 @@ parse_time_1_test_() ->
     ].
 
 parse_datetime_1_test_() ->
-    Ans = {{{2017, 3, 3}, {13, 31, 37}}, 523800, microsecond},
+    DateTime = {{2017, 3, 3}, {13, 31, 37}},
+    Ans = {DateTime, 523800, microsecond},
     [ ?_assertMatch(Ans, parse_datetime(<<"2017-03-03T16:31:37.5238+03:00">>)),
       ?_assertMatch(Ans, parse_datetime(<<"2017-03-03t16:31:37.5238+03:00">>)),
       ?_assertMatch(Ans, parse_datetime(<<"2017-03-03 16:31:37.5238+03:00">>)),
       ?_assertMatch(Ans, parse_datetime(<<"2017-03-03T13:31:37.5238Z">>)),
-      ?_assertMatch(Ans, parse_datetime(<<"2017-03-03t13:31:37.5238z">>))
+      ?_assertMatch(Ans, parse_datetime(<<"2017-03-03t13:31:37.5238z">>)),
+      ?_assertMatch({DateTime, undefined, millisecond}, parse_datetime(<<"2017-03-03T13:31:37Z">>)),
+      ?_assertMatch({DateTime, 100, millisecond}, parse_datetime(<<"2017-03-03T13:31:37.1Z">>)),
+      ?_assertMatch({DateTime, 120, millisecond}, parse_datetime(<<"2017-03-03T13:31:37.12Z">>)),
+      ?_assertMatch({DateTime, 123, millisecond}, parse_datetime(<<"2017-03-03T13:31:37.123Z">>)),
+      ?_assertMatch({DateTime, 123400, microsecond}, parse_datetime(<<"2017-03-03T13:31:37.1234Z">>)),
+      ?_assertMatch({DateTime, 123450, microsecond}, parse_datetime(<<"2017-03-03T13:31:37.12345Z">>)),
+      ?_assertMatch({DateTime, 123456, microsecond}, parse_datetime(<<"2017-03-03T13:31:37.123456Z">>)),
+      ?_assertMatch({DateTime, 123456700, nanosecond}, parse_datetime(<<"2017-03-03T13:31:37.1234567Z">>)),
+      ?_assertMatch({DateTime, 123456780, nanosecond}, parse_datetime(<<"2017-03-03T13:31:37.12345678Z">>)),
+      ?_assertMatch({DateTime, 123456789, nanosecond}, parse_datetime(<<"2017-03-03T13:31:37.123456789Z">>)),
+      ?_assertThrow(badfrac, parse_datetime(<<"2017-03-03T13:31:37.1234567890Z">>))
     ].
 
 parse_local_datetime_1_test_() ->
