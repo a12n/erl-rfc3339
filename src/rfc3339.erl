@@ -387,6 +387,15 @@ format_datetime_2_test_() ->
       ?_assertError(badarg, format_datetime({{1970, 1, 1}, {0, 0, 0}}, 1000000))
     ].
 
+format_datetime_3_test_() ->
+    [ ?_assertEqual(<<"1970-01-01T00:00:00.001Z">>,
+                    iolist_to_binary(format_datetime({{1970, 1, 1}, {0, 0, 0}}, 1, millisecond))),
+      ?_assertEqual(<<"1970-01-01T00:00:00.000001Z">>,
+                    iolist_to_binary(format_datetime({{1970, 1, 1}, {0, 0, 0}}, 1, microsecond))),
+      ?_assertEqual(<<"1970-01-01T00:00:00.000000001Z">>,
+                    iolist_to_binary(format_datetime({{1970, 1, 1}, {0, 0, 0}}, 1, nanosecond)))
+    ].
+
 format_local_datetime_2_test_() ->
     [ ?_assertEqual(<<"2016-06-20T09:38:15+03:00">>,
                     iolist_to_binary(format_local_datetime({{2016, 06, 20}, {09, 38, 15}}, {3, 0}))),
