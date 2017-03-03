@@ -432,6 +432,15 @@ parse_datetime_1_test_() ->
       ?_assertMatch(Ans, parse_datetime(<<"2017-03-03t13:31:37.5238z">>))
     ].
 
+parse_date_1_test_() ->
+    [ ?_assertThrow(badarg, parse_date(<<>>)),
+      ?_assertThrow(badarg, parse_date(<<"1970-01-XX">>)),
+      ?_assertThrow(badarg, parse_date(<<"1970.01.01">>)),
+      ?_assertThrow(baddate, parse_date(<<"2017-02-29">>)),
+      ?_assertEqual({1970, 1, 1}, parse_date(<<"1970-01-01">>)),
+      ?_assertEqual({1970, 1, 1}, parse_date(["1970", $-, "01", $- | "01"]))
+    ].
+
 parse_local_datetime_1_test_() ->
     [ ?_assertMatch({{{2017, 3, 3}, {16, 31, 37}}, {3, 0}, 523800, microsecond},
                     parse_local_datetime(<<"2017-03-03T16:31:37.5238+03:00">>)),
