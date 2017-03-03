@@ -347,12 +347,15 @@ parse_offset(<<"-00:00", Str/bytes>>, Cont) -> Cont(Str, undefined);
 parse_offset(<<Sign, HourStr:2/bytes, $:, MinuteStr:2/bytes, Str/bytes>>, Cont) ->
     try {binary_to_integer(HourStr),
          binary_to_integer(MinuteStr)} of
-        {Hour, Minute} ->
+        {Hour, Minute}
+          when Hour >= -23, Hour =< 23,
+               Minute >= 0, Minute =< 59 ->
             case Sign of
                 $- -> Cont(Str, {-Hour, Minute});
                 $+ -> Cont(Str, {Hour, Minute});
                 _ -> throw(badarg)
-            end
+            end;
+        _BadOffset -> throw(badoffset)
     catch
         error : badarg -> throw(badarg)
     end;
