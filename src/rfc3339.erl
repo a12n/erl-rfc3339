@@ -69,7 +69,7 @@ format_datetime(DateTime, Frac, Unit) ->
 
 -spec format_local_datetime(datetime(), offset() | undefined) -> iodata().
 
-format_local_datetime({Date, Time}, Offset) ->
+format_local_datetime(_DateTime = {Date, Time}, Offset) ->
     [format_date(Date), $T, format_time(Time), format_offset(Offset)].
 
 %%--------------------------------------------------------------------
@@ -84,21 +84,21 @@ format_local_datetime(DateTime, Offset, Frac) ->
 -spec format_local_datetime(datetime(), offset() | undefined,
                             fraction(), fraction_unit()) -> iodata().
 
-format_local_datetime({Date, Time}, Offset, Frac, Unit) ->
+format_local_datetime(_DateTime = {Date, Time}, Offset, Frac, Unit) ->
     [format_date(Date), $T, format_time(Time, Frac, Unit), format_offset(Offset)].
 
 %%--------------------------------------------------------------------
 
 -spec format_date(date()) -> iodata().
 
-format_date({Year, Month, Day}) ->
+format_date(_Date = {Year, Month, Day}) ->
     [format4(Year), $-, format2(Month), $-, format2(Day)].
 
 %%--------------------------------------------------------------------
 
 -spec format_time(time()) -> iodata().
 
-format_time({Hour, Minute, Second}) ->
+format_time(_Time = {Hour, Minute, Second}) ->
     [format2(Hour), $:, format2(Minute), $:, format2(Second)].
 
 %%--------------------------------------------------------------------
