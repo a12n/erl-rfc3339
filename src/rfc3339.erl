@@ -421,7 +421,9 @@ parse_datetime_1_test_() ->
     Ans = {{{2017, 3, 3}, {13, 31, 37}}, 523800, microsecond},
     [ ?_assertMatch(Ans, parse_datetime(<<"2017-03-03T16:31:37.5238+03:00">>)),
       ?_assertMatch(Ans, parse_datetime(<<"2017-03-03t16:31:37.5238+03:00">>)),
-      ?_assertMatch(Ans, parse_datetime(<<"2017-03-03 16:31:37.5238+03:00">>))
+      ?_assertMatch(Ans, parse_datetime(<<"2017-03-03 16:31:37.5238+03:00">>)),
+      ?_assertMatch(Ans, parse_datetime(<<"2017-03-03T13:31:37.5238Z">>)),
+      ?_assertMatch(Ans, parse_datetime(<<"2017-03-03t13:31:37.5238z">>))
     ].
 
 parse_local_datetime_1_test_() ->
