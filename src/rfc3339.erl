@@ -447,6 +447,7 @@ parse_datetime_1_test_() ->
     [ ?_assertMatch(Ans, parse_datetime(<<"2017-03-03T16:31:37.5238+03:00">>)),
       ?_assertMatch(Ans, parse_datetime(<<"2017-03-03t16:31:37.5238+03:00">>)),
       ?_assertMatch(Ans, parse_datetime(<<"2017-03-03 16:31:37.5238+03:00">>)),
+      ?_assertThrow(badoffset, parse_datetime(<<"2017-03-03T16:31:37.5238-00:00">>)),
       ?_assertMatch(Ans, parse_datetime(<<"2017-03-03T13:31:37.5238Z">>)),
       ?_assertMatch(Ans, parse_datetime(<<"2017-03-03t13:31:37.5238z">>)),
       ?_assertMatch({DateTime, undefined, millisecond}, parse_datetime(<<"2017-03-03T13:31:37Z">>)),
