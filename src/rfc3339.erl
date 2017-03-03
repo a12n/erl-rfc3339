@@ -441,6 +441,15 @@ parse_date_1_test_() ->
       ?_assertEqual({1970, 1, 1}, parse_date(["1970", $-, "01", $- | "01"]))
     ].
 
+parse_time_1_test_() ->
+    [ ?_assertThrow(badarg, parse_time(<<>>)),
+      ?_assertThrow(badarg, parse_time(<<"22:13:??">>)),
+      ?_assertThrow(badarg, parse_time(<<"22-13-57">>)),
+      ?_assertThrow(badtime, parse_time(<<"22:13:75">>)),
+      ?_assertEqual({22, 13, 57}, parse_time(<<"22:13:57">>)),
+      ?_assertEqual({22, 13, 57}, parse_time(["22", $:, <<"13:">> | "57"]))
+    ].
+
 parse_local_datetime_1_test_() ->
     [ ?_assertMatch({{{2017, 3, 3}, {16, 31, 37}}, {3, 0}, 523800, microsecond},
                     parse_local_datetime(<<"2017-03-03T16:31:37.5238+03:00">>)),
