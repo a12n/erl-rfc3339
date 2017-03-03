@@ -418,8 +418,10 @@ format_time_1_test_() ->
       ?_assertEqual(<<"09:38:15">>, iolist_to_binary(format_time({09, 38, 15}))) ].
 
 parse_datetime_1_test_() ->
-    [ ?_assertMatch({{{2017, 3, 3}, {13, 31, 37}}, 523800, microsecond},
-                    parse_datetime(<<"2017-03-03T16:31:37.5238+03:00">>))
+    Ans = {{{2017, 3, 3}, {13, 31, 37}}, 523800, microsecond},
+    [ ?_assertMatch(Ans, parse_datetime(<<"2017-03-03T16:31:37.5238+03:00">>)),
+      ?_assertMatch(Ans, parse_datetime(<<"2017-03-03t16:31:37.5238+03:00">>)),
+      ?_assertMatch(Ans, parse_datetime(<<"2017-03-03 16:31:37.5238+03:00">>))
     ].
 
 parse_local_datetime_1_test_() ->
