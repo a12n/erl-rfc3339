@@ -417,11 +417,6 @@ format_time_1_test_() ->
       ?_assertEqual(<<"23:59:60">>, iolist_to_binary(format_time({23, 59, 60}))),
       ?_assertEqual(<<"09:38:15">>, iolist_to_binary(format_time({09, 38, 15}))) ].
 
-format_time_2_test_() ->
-    [ ?_assertEqual(<<"00:00:00.000123">>, iolist_to_binary(format_time({00, 00, 00}, 123))),
-      ?_assertEqual(<<"23:59:59.999999">>, iolist_to_binary(format_time({23, 59, 59}, 999999))),
-      ?_assertEqual(<<"23:59:59.000000">>, iolist_to_binary(format_time({23, 59, 59}, 0))) ].
-
 parse_datetime_1_test_() ->
     [ ?_assertMatch({{{2017, 3, 3}, {13, 31, 37}}, 523800, microsecond},
                     parse_datetime(<<"2017-03-03T16:31:37.5238+03:00">>))
