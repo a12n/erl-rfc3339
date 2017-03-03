@@ -434,4 +434,11 @@ parse_datetime_1_test_() ->
                     parse_datetime(<<"2017-03-03T16:31:37.5238+03:00">>))
     ].
 
+parse_local_datetime_1_test_() ->
+    [ ?_assertMatch({{{2017, 3, 3}, {16, 31, 37}}, {3, 0}, 523800, microsecond},
+                    parse_local_datetime(<<"2017-03-03T16:31:37.5238+03:00">>)),
+      ?_assertMatch({{{2017, 3, 3}, {16, 31, 37}}, {3, 0}, undefined, _Unit},
+                    parse_local_datetime(<<"2017-03-03T16:31:37+03:00">>))
+    ].
+
 -endif.
