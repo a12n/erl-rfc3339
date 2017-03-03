@@ -350,7 +350,8 @@ parse_offset(<<Sign, HourStr:2/bytes, $:, MinuteStr:2/bytes, Str/bytes>>, Cont) 
     Minute = binary_to_integer(MinuteStr),
     case Sign of
         $- -> Cont(Str, {-Hour, Minute});
-        $+ -> Cont(Str, {Hour, Minute})
+        $+ -> Cont(Str, {Hour, Minute});
+        _ -> throw(badarg)
     end;
 
 parse_offset(_BadStr, _Cont) -> throw(badarg).
