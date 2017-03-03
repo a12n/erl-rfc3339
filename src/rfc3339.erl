@@ -345,13 +345,16 @@ parse_offset(<<Z, Str/bytes>>, Cont) when Z =:= $Z; Z =:= $z -> Cont(Str, {0, 0}
 parse_offset(<<"-00:00", Str/bytes>>, Cont) -> Cont(Str, undefined);
 
 parse_offset(<<Sign, HourStr:2/bytes, $:, MinuteStr:2/bytes, Str/bytes>>, Cont) ->
-    %% TODO: handle error:badarg from binary_to_integer/1
-    Hour = binary_to_integer(HourStr),
-    Minute = binary_to_integer(MinuteStr),
-    case Sign of
-        $- -> Cont(Str, {-Hour, Minute});
-        $+ -> Cont(Str, {Hour, Minute});
-        _ -> throw(badarg)
+    try {binary_to_integer(HourStr),
+         binary_to_integer(MinuteStr)} of
+        {Hour, Minute} ->
+            case Sign of
+                $- -> Cont(Str, {-Hour, Minute});
+                $+ -> Cont(Str, {Hour, Minute});
+                _ -> throw(badarg)
+            end
+    catch
+        error : badarg -> throw(badarg)
     end;
 
 parse_offset(_BadStr, _Cont) -> throw(badarg).
