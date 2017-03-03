@@ -161,7 +161,7 @@ parse_local_datetime(Str) when is_binary(Str) ->
                          );
                    (OffsetStr, Time) ->
                         Frac = undefined,
-                        Unit = microsecond,
+                        Unit = millisecond,
                         parse_offset(
                           OffsetStr,
                           fun(_EmptyStr = <<>>, Offset) -> {{Date, Time}, Offset, Frac, Unit};
