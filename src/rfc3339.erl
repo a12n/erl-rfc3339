@@ -103,13 +103,6 @@ format_time({Hour, Minute, Second}) ->
 
 %%--------------------------------------------------------------------
 
--spec format_time(time(), fraction()) -> iodata().
-
-format_time(Time, Frac) ->
-    format_time(Time, Frac, _Unit = microsecond).
-
-%%--------------------------------------------------------------------
-
 -spec format_time(time(), fraction(), fraction_unit()) -> iodata().
 
 format_time(Time, Frac, Unit) ->
