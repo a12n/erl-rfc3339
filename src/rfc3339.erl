@@ -282,12 +282,16 @@ parse_date(<<YearStr:4/bytes, $-,
              DayStr:2/bytes,
              Str/bytes>>,
            Cont) ->
-    Date = {binary_to_integer(YearStr),
-            binary_to_integer(MonthStr),
-            binary_to_integer(DayStr)},
-    case calendar:valid_date(Date) of
-        true -> Cont(Str, Date);
-        false -> throw(baddate)
+    try {binary_to_integer(YearStr),
+         binary_to_integer(MonthStr),
+         binary_to_integer(DayStr)} of
+        Date ->
+            case calendar:valid_date(Date) of
+                true -> Cont(Str, Date);
+                false -> throw(baddate)
+            end
+    catch
+        error : badarg -> throw(badarg)
     end;
 
 parse_date(_BadStr, _Cont) -> throw(badarg).
@@ -301,14 +305,16 @@ parse_time(<<HourStr:2/bytes, $:,
              SecondStr:2/bytes,
              Str/bytes>>,
            Cont) ->
-    case {binary_to_integer(HourStr),
-          binary_to_integer(MinuteStr),
-          binary_to_integer(SecondStr)} of
+    try {binary_to_integer(HourStr),
+         binary_to_integer(MinuteStr),
+         binary_to_integer(SecondStr)} of
         Time = {Hour, Minute, Second}
           when Hour >= 0, Hour =< 23,
                Minute >= 0, Minute =< 59,
                Second >= 0, Second =< 60 -> Cont(Str, Time);
         _BadTime -> throw(badtime)
+    catch
+        error : badarg -> throw(badarg)
     end;
 
 parse_time(_BadStr, _Cont) -> throw(badarg).
