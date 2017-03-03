@@ -261,9 +261,10 @@ format9(N) ->
 
 -spec format_fraction(fraction(), fraction_unit()) -> iodata().
 
-format_fraction(N, millisecond) -> format3(N rem 1000);
-format_fraction(N, microsecond) -> format6(N rem 1000000);
-format_fraction(N, nanosecond) -> format9(N rem 1000000000).
+format_fraction(N, millisecond) when N < 1000 -> format3(N);
+format_fraction(N, microsecond) when N < 1000000 -> format6(N);
+format_fraction(N, nanosecond) when N < 1000000000 -> format9(N);
+format_fraction(_N, _Unit) -> error(badarg).
 
 %%--------------------------------------------------------------------
 
@@ -382,7 +383,8 @@ format_datetime_1_test_() ->
 
 format_datetime_2_test_() ->
     [ ?_assertEqual(<<"1970-01-01T00:00:00.000001Z">>,
-                    iolist_to_binary(format_datetime({{1970, 1, 1}, {0, 0, 0}}, 1)))
+                    iolist_to_binary(format_datetime({{1970, 1, 1}, {0, 0, 0}}, 1))),
+      ?_assertError(badarg, format_datetime({{1970, 1, 1}, {0, 0, 0}}, 1000000))
     ].
 
 format_local_datetime_2_test_() ->
