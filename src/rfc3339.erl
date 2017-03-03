@@ -474,7 +474,9 @@ parse_local_datetime_1_test_() ->
       ?_assertMatch({DateTime, Offset, undefined, _Unit},
                     parse_local_datetime(<<"2017-03-03T16:31:37+03:00">>)),
       ?_assertMatch({DateTime, undefined, Frac, microsecond},
-                    parse_local_datetime(<<"2017-03-03T16:31:37.5238-00:00">>))
+                    parse_local_datetime(<<"2017-03-03T16:31:37.5238-00:00">>)),
+      ?_assertThrow(badarg, parse_local_datetime(<<"2017-03-03T16:31:37+03:XX">>)),
+      ?_assertThrow(badoffset, parse_local_datetime(<<"2017-03-03T16:31:37+42:00">>))
     ].
 
 -endif.
