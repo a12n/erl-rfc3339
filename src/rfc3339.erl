@@ -3,13 +3,13 @@
 %% Types
 -export_type([year/0, month/0, day/0, date/0,
               hour/0, minute/0, second/0, time/0,
-              fraction/0, fraction_unit/0,
+              fraction/0,
               datetime/0, offset/0,
               error/0]).
 
 %% API
--export([format_datetime/1, format_datetime/2, format_datetime/3,
-         format_local_datetime/2, format_local_datetime/3, format_local_datetime/4,
+-export([format_datetime/1, format_datetime/2,
+         format_local_datetime/2, format_local_datetime/3,
          format_date/1,
          format_time/1]).
 
@@ -31,8 +31,11 @@
 -type minute() :: 0..59.
 -type second() :: 0..59.
 
--type fraction() :: non_neg_integer().
--type fraction_unit() :: millisecond | microsecond | nanosecond.
+-type fraction() ::
+        0..999999                   % microsecond by default
+      | {0..999, millisecond}
+      | {0..999999, microsecond}
+      | {0..999999999, nanosecond}.
 
 -type date() :: {year(), month(), day()}.
 -type time() :: {hour(), minute(), second()}
@@ -57,14 +60,7 @@ format_datetime(DateTime) ->
 -spec format_datetime(datetime(), fraction()) -> iodata().
 
 format_datetime(DateTime, Frac) ->
-    format_datetime(DateTime, Frac, _Unit = microsecond).
-
-%%--------------------------------------------------------------------
-
--spec format_datetime(datetime(), fraction(), fraction_unit()) -> iodata().
-
-format_datetime(DateTime, Frac, Unit) ->
-    format_local_datetime(DateTime, _Offset = {0, 0}, Frac, Unit).
+    format_local_datetime(DateTime, _Offset = {0, 0}, Frac).
 
 %%--------------------------------------------------------------------
 
@@ -77,16 +73,8 @@ format_local_datetime(_DateTime = {Date, Time}, Offset) ->
 
 -spec format_local_datetime(datetime(), offset() | undefined, fraction()) -> iodata().
 
-format_local_datetime(DateTime, Offset, Frac) ->
-    format_local_datetime(DateTime, Offset, Frac, _Unit = microsecond).
-
-%%--------------------------------------------------------------------
-
--spec format_local_datetime(datetime(), offset() | undefined,
-                            fraction(), fraction_unit()) -> iodata().
-
-format_local_datetime(_DateTime = {Date, Time}, Offset, Frac, Unit) ->
-    [format_date(Date), $T, format_time(Time, Frac, Unit), format_offset(Offset)].
+format_local_datetime(_DateTime = {Date, Time}, Offset, Frac) ->
+    [format_date(Date), $T, format_time(Time, Frac), format_offset(Offset)].
 
 %%--------------------------------------------------------------------
 
@@ -104,28 +92,28 @@ format_time(_Time = {Hour, Minute, Second}) ->
 
 %%--------------------------------------------------------------------
 
--spec format_time(time(), fraction(), fraction_unit()) -> iodata().
+-spec format_time(time(), fraction()) -> iodata().
 
-format_time(Time, Frac, Unit) ->
-    [format_time(Time), $., format_fraction(Frac, Unit)].
+format_time(Time, Frac) ->
+    [format_time(Time), $., format_fraction(Frac)].
 
 %%%===================================================================
 %%% API
 %%%===================================================================
 
--spec parse_datetime(iodata()) -> {datetime(), fraction(), fraction_unit()}.
+-spec parse_datetime(iodata()) -> {datetime(), fraction()}.
 
 parse_datetime(Str) ->
     case parse_local_datetime(Str) of
-        {_Local, _Offset = undefined, _Frac, _Unit} -> throw(badoffset);
-        {Local, Offset, Frac, Unit} -> {remove_offset(Local, Offset), Frac, Unit}
+        {_Local, _Offset = undefined, _Frac} -> throw(badoffset);
+        {Local, Offset, Frac} -> {remove_offset(Local, Offset), Frac}
     end.
 
 %%--------------------------------------------------------------------
 
 -spec parse_local_datetime(iodata()) ->
                                   {datetime(), offset() | undefined,
-                                   fraction() | undefined, fraction_unit()}.
+                                   fraction() | undefined}.
 
 parse_local_datetime(Str) when is_binary(Str) ->
     parse_date(
@@ -154,7 +142,7 @@ parse_local_datetime(Str) when is_binary(Str) ->
                                       end,
                                   parse_offset(
                                     OffsetStr,
-                                    fun(_EmptyStr = <<>>, Offset) -> {{Date, Time}, Offset, Frac, Unit};
+                                    fun(_EmptyStr = <<>>, Offset) -> {{Date, Time}, Offset, {Frac, Unit}};
                                        (_StrLeft, _Offset) -> throw(badarg)
                                     end
                                    )
@@ -162,10 +150,9 @@ parse_local_datetime(Str) when is_binary(Str) ->
                          );
                    (OffsetStr, Time) ->
                         Frac = undefined,
-                        Unit = millisecond,
                         parse_offset(
                           OffsetStr,
-                          fun(_EmptyStr = <<>>, Offset) -> {{Date, Time}, Offset, Frac, Unit};
+                          fun(_EmptyStr = <<>>, Offset) -> {{Date, Time}, Offset, Frac};
                              (_StrLeft, _Offset) -> throw(badarg)
                           end
                          )
@@ -253,12 +240,13 @@ format9(N) ->
 
 %%--------------------------------------------------------------------
 
--spec format_fraction(fraction(), fraction_unit()) -> iodata().
+-spec format_fraction(fraction()) -> iodata().
 
-format_fraction(N, millisecond) when N < 1000 -> format3(N);
-format_fraction(N, microsecond) when N < 1000000 -> format6(N);
-format_fraction(N, nanosecond) when N < 1000000000 -> format9(N);
-format_fraction(_N, _Unit) -> error(badarg).
+format_fraction({N, millisecond}) when N < 1000 -> format3(N);
+format_fraction({N, microsecond}) when N < 1000000 -> format6(N);
+format_fraction({N, nanosecond}) when N < 1000000000 -> format9(N);
+format_fraction(N) when N >= 0, N < 1000000 -> format6(N);
+format_fraction(_Frac) -> error(badarg).
 
 %%--------------------------------------------------------------------
 
@@ -397,11 +385,11 @@ format_datetime_2_test_() ->
 
 format_datetime_3_test_() ->
     [ ?_assertEqual(<<"1970-01-01T00:00:00.001Z">>,
-                    iolist_to_binary(format_datetime({{1970, 1, 1}, {0, 0, 0}}, 1, millisecond))),
+                    iolist_to_binary(format_datetime({{1970, 1, 1}, {0, 0, 0}}, {1, millisecond}))),
       ?_assertEqual(<<"1970-01-01T00:00:00.000001Z">>,
-                    iolist_to_binary(format_datetime({{1970, 1, 1}, {0, 0, 0}}, 1, microsecond))),
+                    iolist_to_binary(format_datetime({{1970, 1, 1}, {0, 0, 0}}, {1, microsecond}))),
       ?_assertEqual(<<"1970-01-01T00:00:00.000000001Z">>,
-                    iolist_to_binary(format_datetime({{1970, 1, 1}, {0, 0, 0}}, 1, nanosecond)))
+                    iolist_to_binary(format_datetime({{1970, 1, 1}, {0, 0, 0}}, {1, nanosecond})))
     ].
 
 format_local_datetime_2_test_() ->
@@ -454,7 +442,7 @@ parse_time_1_test_() ->
 
 parse_datetime_1_test_() ->
     DateTime = {{2017, 3, 3}, {13, 31, 37}},
-    Ans = {DateTime, 523800, microsecond},
+    Ans = {DateTime, {523800, microsecond}},
     [ ?_assertMatch(Ans, parse_datetime(<<"2017-03-03T16:31:37.5238+03:00">>)),
       ?_assertMatch(Ans, parse_datetime(<<"2017-03-03t16:31:37.5238+03:00">>)),
       ?_assertMatch(Ans, parse_datetime(<<"2017-03-03 16:31:37.5238+03:00">>)),
@@ -462,35 +450,35 @@ parse_datetime_1_test_() ->
       ?_assertThrow(badarg, parse_datetime(<<"2017-03-03T16:31:37.5238?00:00">>)),
       ?_assertMatch(Ans, parse_datetime(<<"2017-03-03T13:31:37.5238Z">>)),
       ?_assertMatch(Ans, parse_datetime(<<"2017-03-03t13:31:37.5238z">>)),
-      ?_assertMatch({DateTime, undefined, millisecond}, parse_datetime(<<"2017-03-03T13:31:37Z">>)),
-      ?_assertMatch({DateTime, 100, millisecond}, parse_datetime(<<"2017-03-03T13:31:37.1Z">>)),
-      ?_assertMatch({DateTime, 120, millisecond}, parse_datetime(<<"2017-03-03T13:31:37.12Z">>)),
-      ?_assertMatch({DateTime, 123, millisecond}, parse_datetime(<<"2017-03-03T13:31:37.123Z">>)),
-      ?_assertMatch({DateTime, 123400, microsecond}, parse_datetime(<<"2017-03-03T13:31:37.1234Z">>)),
-      ?_assertMatch({DateTime, 123450, microsecond}, parse_datetime(<<"2017-03-03T13:31:37.12345Z">>)),
-      ?_assertMatch({DateTime, 123456, microsecond}, parse_datetime(<<"2017-03-03T13:31:37.123456Z">>)),
-      ?_assertMatch({DateTime, 123456700, nanosecond}, parse_datetime(<<"2017-03-03T13:31:37.1234567Z">>)),
-      ?_assertMatch({DateTime, 123456780, nanosecond}, parse_datetime(<<"2017-03-03T13:31:37.12345678Z">>)),
-      ?_assertMatch({DateTime, 123456789, nanosecond}, parse_datetime(<<"2017-03-03T13:31:37.123456789Z">>)),
+      ?_assertMatch({DateTime, undefined}, parse_datetime(<<"2017-03-03T13:31:37Z">>)),
+      ?_assertMatch({DateTime, {100, millisecond}}, parse_datetime(<<"2017-03-03T13:31:37.1Z">>)),
+      ?_assertMatch({DateTime, {120, millisecond}}, parse_datetime(<<"2017-03-03T13:31:37.12Z">>)),
+      ?_assertMatch({DateTime, {123, millisecond}}, parse_datetime(<<"2017-03-03T13:31:37.123Z">>)),
+      ?_assertMatch({DateTime, {123400, microsecond}}, parse_datetime(<<"2017-03-03T13:31:37.1234Z">>)),
+      ?_assertMatch({DateTime, {123450, microsecond}}, parse_datetime(<<"2017-03-03T13:31:37.12345Z">>)),
+      ?_assertMatch({DateTime, {123456, microsecond}}, parse_datetime(<<"2017-03-03T13:31:37.123456Z">>)),
+      ?_assertMatch({DateTime, {123456700, nanosecond}}, parse_datetime(<<"2017-03-03T13:31:37.1234567Z">>)),
+      ?_assertMatch({DateTime, {123456780, nanosecond}}, parse_datetime(<<"2017-03-03T13:31:37.12345678Z">>)),
+      ?_assertMatch({DateTime, {123456789, nanosecond}}, parse_datetime(<<"2017-03-03T13:31:37.123456789Z">>)),
       ?_assertThrow(badfrac, parse_datetime(<<"2017-03-03T13:31:37.1234567890Z">>)),
       ?_assertThrow(badarg, parse_datetime(<<"2017-03-03T13:31:37.Z">>)),
-      ?_assertMatch({{{1996, 12, 20}, {0, 39, 57}}, undefined, millisecond},
+      ?_assertMatch({{{1996, 12, 20}, {0, 39, 57}}, undefined},
                     parse_datetime(<<"1996-12-19T16:39:57-08:00">>))
     ].
 
 parse_local_datetime_1_test_() ->
     DateTime = {{2017, 3, 3}, {16, 31, 37}},
     Offset = {3, 0},
-    Frac = 523800,
-    [ ?_assertMatch({DateTime, Offset, Frac, microsecond},
+    Frac = {523800, microsecond},
+    [ ?_assertMatch({DateTime, Offset, Frac},
                     parse_local_datetime(<<"2017-03-03T16:31:37.5238+03:00">>)),
-      ?_assertMatch({DateTime, Offset, undefined, _Unit},
+      ?_assertMatch({DateTime, Offset, undefined},
                     parse_local_datetime(<<"2017-03-03T16:31:37+03:00">>)),
-      ?_assertMatch({DateTime, undefined, Frac, microsecond},
+      ?_assertMatch({DateTime, undefined, Frac},
                     parse_local_datetime(<<"2017-03-03T16:31:37.5238-00:00">>)),
       ?_assertThrow(badarg, parse_local_datetime(<<"2017-03-03T16:31:37+03:XX">>)),
       ?_assertThrow(badoffset, parse_local_datetime(<<"2017-03-03T16:31:37+42:00">>)),
-      ?_assertMatch({{{1985, 4, 12}, {23, 20, 50}}, {0, 0}, 520, millisecond},
+      ?_assertMatch({{{1985, 4, 12}, {23, 20, 50}}, {0, 0}, {520, millisecond}},
                     parse_local_datetime(<<"1985-04-12T23:20:50.52Z">>))
     ].
 
