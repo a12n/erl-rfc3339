@@ -29,13 +29,14 @@
 
 -type hour() :: 0..23.
 -type minute() :: 0..59.
--type second() :: 0..60.                        % Allows leap second
+-type second() :: 0..59.
 
 -type fraction() :: non_neg_integer().
 -type fraction_unit() :: millisecond | microsecond | nanosecond.
 
 -type date() :: {year(), month(), day()}.
--type time() :: {hour(), minute(), second()}.
+-type time() :: {hour(), minute(), second()}
+              | {23, 59, 60}.                   % Allows leap second
 -type datetime() :: {date(), time()}.
 
 -type offset() :: {-23..23, minute()}.
