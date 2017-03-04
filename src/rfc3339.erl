@@ -101,7 +101,7 @@ format_time(Time, Frac) ->
 %%% API
 %%%===================================================================
 
--spec parse_datetime(iodata()) -> {datetime(), fraction()}.
+-spec parse_datetime(iodata()) -> {datetime(), fraction() | undefined}.
 
 parse_datetime(Str) ->
     case parse_local_datetime(Str) of
