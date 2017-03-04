@@ -103,6 +103,7 @@ format_time(Time, Frac) ->
 
 -spec parse_datetime(iodata()) -> {datetime(), fraction() | undefined}.
 
+%% @throws error()
 parse_datetime(Str) ->
     case parse_local_datetime(Str) of
         {_Local, _Offset = undefined, _Frac} -> throw(badoffset);
@@ -115,6 +116,7 @@ parse_datetime(Str) ->
                                   {datetime(), offset() | undefined,
                                    fraction() | undefined}.
 
+%% @throws error()
 parse_local_datetime(Str) when is_binary(Str) ->
     parse_date(
       Str,
@@ -169,6 +171,7 @@ parse_local_datetime(Str) when is_list(Str) ->
 
 -spec parse_date(iodata()) -> date().
 
+%% @throws error()
 parse_date(Str) when is_binary(Str) ->
     parse_date(
       Str,
@@ -183,6 +186,7 @@ parse_date(Str) when is_list(Str) -> parse_date(iolist_to_binary(Str)).
 
 -spec parse_time(iodata()) -> time().
 
+%% @throws error()
 parse_time(Str) when is_binary(Str) ->
     parse_time(
       Str,
