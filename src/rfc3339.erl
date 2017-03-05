@@ -557,14 +557,14 @@ parse_local_datetime_1_test_() ->
     ].
 
 format_system_time_2_test_() ->
-    [ ?_assertEqual(<<"1970-01-01T00:00:00Z">>,
-                    iolist_to_binary(format_system_time(0, seconds))),
-      ?_assertEqual(<<"1970-01-01T00:00:00.000Z">>,
-                    iolist_to_binary(format_system_time(0, milli_seconds))),
-      ?_assertEqual(<<"1970-01-01T00:00:00.000000Z">>,
-                    iolist_to_binary(format_system_time(0, micro_seconds))),
-      ?_assertEqual(<<"1970-01-01T00:00:00.000000000Z">>,
-                    iolist_to_binary(format_system_time(0, nano_seconds)))
+    [ ?_assertEqual(<<"1970-01-01T00:02:03Z">>,
+                    iolist_to_binary(format_system_time(123, seconds))),
+      ?_assertEqual(<<"1970-01-01T00:00:00.123Z">>,
+                    iolist_to_binary(format_system_time(123, milli_seconds))),
+      ?_assertEqual(<<"1970-01-01T00:00:00.000123Z">>,
+                    iolist_to_binary(format_system_time(123, micro_seconds))),
+      ?_assertEqual(<<"1970-01-01T00:00:00.000000123Z">>,
+                    iolist_to_binary(format_system_time(123, nano_seconds)))
     ].
 
 -endif.
