@@ -12,7 +12,7 @@
          format_local_datetime/2, format_local_datetime/3,
          format_date/1,
          format_time/1,
-         format_system_time/2]).
+         format_system_time/1, format_system_time/2]).
 
 %% API
 -export([parse_datetime/1,
@@ -97,6 +97,12 @@ format_time(_Time = {Hour, Minute, Second}) ->
 
 format_time(Time, Frac) ->
     [format_time(Time), $., format_fraction(Frac)].
+
+%%--------------------------------------------------------------------
+
+-spec format_system_time(non_neg_integer()) -> iodata().
+
+format_system_time(SysTime) -> format_system_time(SysTime, native).
 
 %%--------------------------------------------------------------------
 
