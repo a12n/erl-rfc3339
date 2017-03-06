@@ -335,9 +335,9 @@ parse_date(<<YearStr:4/bytes, $-,
              DayStr:2/bytes,
              Str/bytes>>,
            Cont) ->
-    try {binary_to_integer(YearStr),
-         binary_to_integer(MonthStr),
-         binary_to_integer(DayStr)} of
+    try {binary_to_non_neg_integer(YearStr),
+         binary_to_non_neg_integer(MonthStr),
+         binary_to_non_neg_integer(DayStr)} of
         Date ->
             case calendar:valid_date(Date) of
                 true -> Cont(Str, Date);
@@ -358,13 +358,11 @@ parse_time(<<HourStr:2/bytes, $:,
              SecondStr:2/bytes,
              Str/bytes>>,
            Cont) ->
-    try {binary_to_integer(HourStr),
-         binary_to_integer(MinuteStr),
-         binary_to_integer(SecondStr)} of
+    try {binary_to_non_neg_integer(HourStr),
+         binary_to_non_neg_integer(MinuteStr),
+         binary_to_non_neg_integer(SecondStr)} of
         Time = {Hour, Minute, Second}
-          when Hour >= 0, Hour =< 23,
-               Minute >= 0, Minute =< 59,
-               Second >= 0, Second =< 59;
+          when Hour =< 23, Minute =< 59, Second =< 59;
                Hour =:= 23, Minute =:= 59, Second =:= 60 -> Cont(Str, Time);
         _BadTime -> throw(badtime)
     catch
@@ -399,11 +397,10 @@ parse_offset(<<Z, Str/bytes>>, Cont) when Z =:= $Z; Z =:= $z -> Cont(Str, {0, 0}
 parse_offset(<<"-00:00", Str/bytes>>, Cont) -> Cont(Str, undefined);
 
 parse_offset(<<Sign, HourStr:2/bytes, $:, MinuteStr:2/bytes, Str/bytes>>, Cont) ->
-    try {binary_to_integer(HourStr),
-         binary_to_integer(MinuteStr)} of
+    try {binary_to_non_neg_integer(HourStr),
+         binary_to_non_neg_integer(MinuteStr)} of
         {Hour, Minute}
-          when Hour >= -23, Hour =< 23,
-               Minute >= 0, Minute =< 59 ->
+          when Hour =< 23, Minute =< 59 ->
             case Sign of
                 $- -> Cont(Str, {-Hour, Minute});
                 $+ -> Cont(Str, {Hour, Minute});
@@ -427,6 +424,24 @@ remove_offset(DateTime, {Hours, Minutes}) ->
       calendar:datetime_to_gregorian_seconds(DateTime) -
           (Hours * 3600 + Minutes * 60)
      ).
+
+%%--------------------------------------------------------------------
+
+-spec binary_to_non_neg_integer(binary()) -> non_neg_integer().
+
+binary_to_non_neg_integer(<<>>) -> error(badarg);
+binary_to_non_neg_integer(Str) -> binary_to_non_neg_integer(Str, 0).
+
+%%--------------------------------------------------------------------
+
+-spec binary_to_non_neg_integer(binary(), non_neg_integer()) -> non_neg_integer().
+
+binary_to_non_neg_integer(<<>>, Ans) -> Ans;
+
+binary_to_non_neg_integer(<<D, Str/bytes>>, Ans) when D >= $0, D =< $9 ->
+    binary_to_non_neg_integer(Str, Ans * 10 + (D - $0));
+
+binary_to_non_neg_integer(_Str, _Ans) -> error(badarg).
 
 %%--------------------------------------------------------------------
 
@@ -498,6 +513,7 @@ parse_date_1_test_() ->
     [ ?_assertThrow(badarg, parse_date(<<>>)),
       ?_assertThrow(badarg, parse_date(<<"1970-01-XX">>)),
       ?_assertThrow(badarg, parse_date(<<"1970.01.01">>)),
+      ?_assertThrow(badarg, parse_date(<<"+970-+1-+1">>)),
       ?_assertThrow(baddate, parse_date(<<"2017-02-29">>)),
       ?_assertEqual({1970, 1, 1}, parse_date(<<"1970-01-01">>)),
       ?_assertEqual({1970, 1, 1}, parse_date(["1970", $-, "01", $- | "01"]))
@@ -508,6 +524,7 @@ parse_time_1_test_() ->
       ?_assertThrow(badarg, parse_time(<<"22:13:??">>)),
       ?_assertThrow(badarg, parse_time(<<"22-13-57">>)),
       ?_assertThrow(badtime, parse_time(<<"22:13:75">>)),
+      ?_assertThrow(badarg, parse_time(<<"+2:+3:+7">>)),
       ?_assertEqual({22, 13, 57}, parse_time(<<"22:13:57">>)),
       ?_assertEqual({22, 13, 57}, parse_time(["22", $:, <<"13:">> | "57"])),
       ?_assertEqual({23, 59, 60}, parse_time(<<"23:59:60">>)),
@@ -536,6 +553,8 @@ parse_datetime_1_test_() ->
       ?_assertMatch({DateTime, {123456789, nanosecond}}, parse_datetime(<<"2017-03-03T13:31:37.123456789Z">>)),
       ?_assertThrow(badfrac, parse_datetime(<<"2017-03-03T13:31:37.1234567890Z">>)),
       ?_assertThrow(badarg, parse_datetime(<<"2017-03-03T13:31:37.Z">>)),
+      ?_assertThrow(badarg, parse_datetime(<<"2017-03-03T13:31:37.+123Z">>)),
+      ?_assertThrow(badarg, parse_datetime(<<"2017-03-03T13:31:37.-123Z">>)),
       ?_assertMatch({{{1996, 12, 20}, {0, 39, 57}}, undefined},
                     parse_datetime(<<"1996-12-19T16:39:57-08:00">>))
     ].
@@ -550,7 +569,10 @@ parse_local_datetime_1_test_() ->
                     parse_local_datetime(<<"2017-03-03T16:31:37+03:00">>)),
       ?_assertMatch({DateTime, undefined, Frac},
                     parse_local_datetime(<<"2017-03-03T16:31:37.5238-00:00">>)),
+      ?_assertThrow(badarg, parse_local_datetime(<<"2017-03-03T16:31:37+03:+4">>)),
       ?_assertThrow(badarg, parse_local_datetime(<<"2017-03-03T16:31:37+03:XX">>)),
+      ?_assertThrow(badarg, parse_local_datetime(<<"2017-03-03T16:31:37-+3:00">>)),
+      ?_assertThrow(badarg, parse_local_datetime(<<"2017-03-03T16:31:37--3:00">>)),
       ?_assertThrow(badoffset, parse_local_datetime(<<"2017-03-03T16:31:37+42:00">>)),
       ?_assertMatch({{{1985, 4, 12}, {23, 20, 50}}, {0, 0}, {520, millisecond}},
                     parse_local_datetime(<<"1985-04-12T23:20:50.52Z">>))
