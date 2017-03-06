@@ -337,11 +337,10 @@ parse_offset(<<Z, Str/bytes>>, Cont) when Z =:= $Z; Z =:= $z -> Cont(Str, {0, 0}
 parse_offset(<<"-00:00", Str/bytes>>, Cont) -> Cont(Str, undefined);
 
 parse_offset(<<Sign, HourStr:2/bytes, $:, MinuteStr:2/bytes, Str/bytes>>, Cont) ->
-    try {binary_to_integer(HourStr),
-         binary_to_integer(MinuteStr)} of
+    try {binary_to_non_neg_integer(HourStr),
+         binary_to_non_neg_integer(MinuteStr)} of
         {Hour, Minute}
-          when Hour >= -23, Hour =< 23,
-               Minute >= 0, Minute =< 59 ->
+          when Hour =< 23, Minute =< 59 ->
             case Sign of
                 $- -> Cont(Str, {-Hour, Minute});
                 $+ -> Cont(Str, {Hour, Minute});
