@@ -275,9 +275,9 @@ parse_date(<<YearStr:4/bytes, $-,
              DayStr:2/bytes,
              Str/bytes>>,
            Cont) ->
-    try {binary_to_integer(YearStr),
-         binary_to_integer(MonthStr),
-         binary_to_integer(DayStr)} of
+    try {binary_to_non_neg_integer(YearStr),
+         binary_to_non_neg_integer(MonthStr),
+         binary_to_non_neg_integer(DayStr)} of
         Date ->
             case calendar:valid_date(Date) of
                 true -> Cont(Str, Date);
