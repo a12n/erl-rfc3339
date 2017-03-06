@@ -19,6 +19,14 @@
          parse_date/1,
          parse_time/1]).
 
+-define(IS_DIGITS(A), A >= $0, A =< $9).
+-define(IS_DIGITS(A, B), ?IS_DIGITS(A), ?IS_DIGITS(B)).
+-define(IS_DIGITS(A, B, C, D), ?IS_DIGITS(A, B), ?IS_DIGITS(C, D)).
+
+-define(DIGITS_TO_INTEGER(A), (A - $0)).
+-define(DIGITS_TO_INTEGER(A, B), (?DIGITS_TO_INTEGER(A) * 10 + ?DIGITS_TO_INTEGER(B))).
+-define(DIGITS_TO_INTEGER(A, B, C, D), (?DIGITS_TO_INTEGER(A, B) * 100 + ?DIGITS_TO_INTEGER(C, D))).
+
 %%%===================================================================
 %%% Types
 %%%===================================================================
@@ -270,21 +278,20 @@ format_offset({Hours, Minutes}) ->
 
 -spec parse_date(binary(), fun()) -> no_return().
 
-parse_date(<<YearStr:4/bytes, $-,
-             MonthStr:2/bytes, $-,
-             DayStr:2/bytes,
+parse_date(<<Y3, Y2, Y1, Y0, $-,
+             M1, M0, $-,
+             D1, D0,
              Str/bytes>>,
-           Cont) ->
-    try {binary_to_non_neg_integer(YearStr),
-         binary_to_non_neg_integer(MonthStr),
-         binary_to_non_neg_integer(DayStr)} of
-        Date ->
-            case calendar:valid_date(Date) of
-                true -> Cont(Str, Date);
-                false -> throw(baddate)
-            end
-    catch
-        error : badarg -> throw(badarg)
+           Cont)
+  when ?IS_DIGITS(Y3, Y2, Y1, Y0),
+       ?IS_DIGITS(M1, M0),
+       ?IS_DIGITS(D1, D0) ->
+    Date = {?DIGITS_TO_INTEGER(Y3, Y2, Y1, Y0),
+            ?DIGITS_TO_INTEGER(M1, M0),
+            ?DIGITS_TO_INTEGER(D1, D0)},
+    case calendar:valid_date(Date) of
+        true -> Cont(Str, Date);
+        false -> throw(baddate)
     end;
 
 parse_date(_BadStr, _Cont) -> throw(badarg).
@@ -293,20 +300,21 @@ parse_date(_BadStr, _Cont) -> throw(badarg).
 
 -spec parse_time(binary(), fun()) -> no_return().
 
-parse_time(<<HourStr:2/bytes, $:,
-             MinuteStr:2/bytes, $:,
-             SecondStr:2/bytes,
+parse_time(<<H1, H0, $:,
+             M1, M0, $:,
+             S1, S0,
              Str/bytes>>,
-           Cont) ->
-    try {binary_to_non_neg_integer(HourStr),
-         binary_to_non_neg_integer(MinuteStr),
-         binary_to_non_neg_integer(SecondStr)} of
+           Cont)
+  when ?IS_DIGITS(H1, H0),
+       ?IS_DIGITS(M1, M0),
+       ?IS_DIGITS(S1, S0) ->
+    case {?DIGITS_TO_INTEGER(H1, H0),
+          ?DIGITS_TO_INTEGER(M1, M0),
+          ?DIGITS_TO_INTEGER(S1, S0)} of
         Time = {Hour, Minute, Second}
           when Hour =< 23, Minute =< 59, Second =< 59;
                Hour =:= 23, Minute =:= 59, Second =:= 60 -> Cont(Str, Time);
         _BadTime -> throw(badtime)
-    catch
-        error : badarg -> throw(badarg)
     end;
 
 parse_time(_BadStr, _Cont) -> throw(badarg).
@@ -321,7 +329,7 @@ parse_frac(Str, Cont) -> parse_frac(Str, _Ans = {0, 0}, Cont).
 
 -spec parse_frac(binary(), term(), fun()) -> no_return().
 
-parse_frac(<<D, Str/bytes>>, {FracLen, Frac}, Cont) when D >= $0, D =< $9 ->
+parse_frac(<<D, Str/bytes>>, {FracLen, Frac}, Cont) when ?IS_DIGITS(D) ->
     parse_frac(Str, {FracLen + 1, 10 * Frac + (D - $0)}, Cont);
 
 parse_frac(Str, Ans = {FracLen, _Frac}, Cont) when FracLen > 0 -> Cont(Str, Ans);
@@ -336,9 +344,11 @@ parse_offset(<<Z, Str/bytes>>, Cont) when Z =:= $Z; Z =:= $z -> Cont(Str, {0, 0}
 
 parse_offset(<<"-00:00", Str/bytes>>, Cont) -> Cont(Str, undefined);
 
-parse_offset(<<Sign, HourStr:2/bytes, $:, MinuteStr:2/bytes, Str/bytes>>, Cont) ->
-    try {binary_to_non_neg_integer(HourStr),
-         binary_to_non_neg_integer(MinuteStr)} of
+parse_offset(<<Sign, H1, H0, $:, M1, M0, Str/bytes>>, Cont)
+  when ?IS_DIGITS(H1, H0),
+       ?IS_DIGITS(M1, M0) ->
+    case {?DIGITS_TO_INTEGER(H1, H0),
+          ?DIGITS_TO_INTEGER(M1, M0)} of
         {Hour, Minute}
           when Hour =< 23, Minute =< 59 ->
             case Sign of
@@ -347,8 +357,6 @@ parse_offset(<<Sign, HourStr:2/bytes, $:, MinuteStr:2/bytes, Str/bytes>>, Cont) 
                 _ -> throw(badarg)
             end;
         _BadOffset -> throw(badoffset)
-    catch
-        error : badarg -> throw(badarg)
     end;
 
 parse_offset(_BadStr, _Cont) -> throw(badarg).
