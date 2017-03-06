@@ -368,6 +368,24 @@ remove_offset(DateTime, {Hours, Minutes}) ->
           (Hours * 3600 + Minutes * 60)
      ).
 
+%%--------------------------------------------------------------------
+
+-spec binary_to_non_neg_integer(binary()) -> non_neg_integer().
+
+binary_to_non_neg_integer(<<>>) -> error(badarg);
+binary_to_non_neg_integer(Str) -> binary_to_non_neg_integer(Str, 0).
+
+%%--------------------------------------------------------------------
+
+-spec binary_to_non_neg_integer(binary(), non_neg_integer()) -> non_neg_integer().
+
+binary_to_non_neg_integer(<<>>, Ans) -> Ans;
+
+binary_to_non_neg_integer(<<D, Str/bytes>>, Ans) when D >= $0, D =< $9 ->
+    binary_to_non_neg_integer(Str, Ans * 10 + (D - $0));
+
+binary_to_non_neg_integer(_Str, _Ans) -> error(badarg).
+
 %%%===================================================================
 %%% Tests
 %%%===================================================================
