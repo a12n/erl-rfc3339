@@ -298,13 +298,11 @@ parse_time(<<HourStr:2/bytes, $:,
              SecondStr:2/bytes,
              Str/bytes>>,
            Cont) ->
-    try {binary_to_integer(HourStr),
-         binary_to_integer(MinuteStr),
-         binary_to_integer(SecondStr)} of
+    try {binary_to_non_neg_integer(HourStr),
+         binary_to_non_neg_integer(MinuteStr),
+         binary_to_non_neg_integer(SecondStr)} of
         Time = {Hour, Minute, Second}
-          when Hour >= 0, Hour =< 23,
-               Minute >= 0, Minute =< 59,
-               Second >= 0, Second =< 59;
+          when Hour =< 23, Minute =< 59, Second =< 59;
                Hour =:= 23, Minute =:= 59, Second =:= 60 -> Cont(Str, Time);
         _BadTime -> throw(badtime)
     catch
