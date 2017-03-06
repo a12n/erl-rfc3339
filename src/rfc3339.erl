@@ -428,6 +428,7 @@ parse_date_1_test_() ->
     [ ?_assertThrow(badarg, parse_date(<<>>)),
       ?_assertThrow(badarg, parse_date(<<"1970-01-XX">>)),
       ?_assertThrow(badarg, parse_date(<<"1970.01.01">>)),
+      ?_assertThrow(badarg, parse_date(<<"+970-+1-+1">>)),
       ?_assertThrow(baddate, parse_date(<<"2017-02-29">>)),
       ?_assertEqual({1970, 1, 1}, parse_date(<<"1970-01-01">>)),
       ?_assertEqual({1970, 1, 1}, parse_date(["1970", $-, "01", $- | "01"]))
@@ -438,6 +439,7 @@ parse_time_1_test_() ->
       ?_assertThrow(badarg, parse_time(<<"22:13:??">>)),
       ?_assertThrow(badarg, parse_time(<<"22-13-57">>)),
       ?_assertThrow(badtime, parse_time(<<"22:13:75">>)),
+      ?_assertThrow(badarg, parse_time(<<"+2:+3:+7">>)),
       ?_assertEqual({22, 13, 57}, parse_time(<<"22:13:57">>)),
       ?_assertEqual({22, 13, 57}, parse_time(["22", $:, <<"13:">> | "57"])),
       ?_assertEqual({23, 59, 60}, parse_time(<<"23:59:60">>)),
@@ -466,6 +468,8 @@ parse_datetime_1_test_() ->
       ?_assertMatch({DateTime, {123456789, nanosecond}}, parse_datetime(<<"2017-03-03T13:31:37.123456789Z">>)),
       ?_assertThrow(badfrac, parse_datetime(<<"2017-03-03T13:31:37.1234567890Z">>)),
       ?_assertThrow(badarg, parse_datetime(<<"2017-03-03T13:31:37.Z">>)),
+      ?_assertThrow(badarg, parse_datetime(<<"2017-03-03T13:31:37.+123Z">>)),
+      ?_assertThrow(badarg, parse_datetime(<<"2017-03-03T13:31:37.-123Z">>)),
       ?_assertMatch({{{1996, 12, 20}, {0, 39, 57}}, undefined},
                     parse_datetime(<<"1996-12-19T16:39:57-08:00">>))
     ].
@@ -480,10 +484,11 @@ parse_local_datetime_1_test_() ->
                     parse_local_datetime(<<"2017-03-03T16:31:37+03:00">>)),
       ?_assertMatch({DateTime, undefined, Frac},
                     parse_local_datetime(<<"2017-03-03T16:31:37.5238-00:00">>)),
+      ?_assertThrow(badarg, parse_local_datetime(<<"2017-03-03T16:31:37+03:+4">>)),
       ?_assertThrow(badarg, parse_local_datetime(<<"2017-03-03T16:31:37+03:XX">>)),
+      ?_assertThrow(badarg, parse_local_datetime(<<"2017-03-03T16:31:37-+3:00">>)),
+      ?_assertThrow(badarg, parse_local_datetime(<<"2017-03-03T16:31:37--3:00">>)),
       ?_assertThrow(badoffset, parse_local_datetime(<<"2017-03-03T16:31:37+42:00">>)),
-      ?_assertThrow(badoffset, parse_local_datetime(<<"2017-03-03T16:31:37-+3:00">>)),
-      ?_assertThrow(badoffset, parse_local_datetime(<<"2017-03-03T16:31:37--3:00">>)),
       ?_assertMatch({{{1985, 4, 12}, {23, 20, 50}}, {0, 0}, {520, millisecond}},
                     parse_local_datetime(<<"1985-04-12T23:20:50.52Z">>))
     ].
