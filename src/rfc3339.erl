@@ -3,7 +3,7 @@
 %% Types
 -export_type([year/0, month/0, day/0, date/0,
               hour/0, minute/0, second/0, time/0,
-              fraction/0,
+              fraction_unit/0, fraction/0,
               datetime/0, offset/0,
               error/0]).
 
@@ -39,11 +39,11 @@
 -type minute() :: 0..59.
 -type second() :: 0..59.
 
--type fraction() ::
-        0..999999                   % microsecond by default
-      | {0..999, millisecond}
+-type fraction_unit() ::
+        {0..999, millisecond}
       | {0..999999, microsecond}
       | {0..999999999, nanosecond}.
+-type fraction() :: 0..999999 | fraction_unit().
 
 -type date() :: {year(), month(), day()}.
 -type time() :: {hour(), minute(), second()}
