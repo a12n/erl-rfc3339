@@ -15,10 +15,7 @@ prop_format_parse_time() ->
 
 prop_format_parse_datetime() ->
     ?FORALL({Date, Time, Frac},
-            {rfc3339:date(), rfc3339:time(),
-             oneof([{integer(0, 999), millisecond},
-                    {integer(0, 999999), microsecond},
-                    {integer(0, 999999999), nanosecond}])},
+            {rfc3339:date(), rfc3339:time(), rfc3339:fraction_unit()},
             ?IMPLIES(calendar:valid_date(Date),
                      rfc3339:parse_datetime(
                        rfc3339:format_datetime({Date, Time}, Frac)) =:=
@@ -26,10 +23,7 @@ prop_format_parse_datetime() ->
 
 prop_format_parse_local_datetime() ->
     ?FORALL({Date, Time, Offset, Frac},
-            {rfc3339:date(), rfc3339:time(), rfc3339:offset(),
-             oneof([{integer(0, 999), millisecond},
-                    {integer(0, 999999), microsecond},
-                    {integer(0, 999999999), nanosecond}])},
+            {rfc3339:date(), rfc3339:time(), rfc3339:offset(), rfc3339:fraction_unit()},
             ?IMPLIES(calendar:valid_date(Date),
                      rfc3339:parse_local_datetime(
                        rfc3339:format_local_datetime({Date, Time}, Offset, Frac)) =:=
