@@ -23,9 +23,7 @@
 -define(IS_DIGITS(A, B), ?IS_DIGITS(A), ?IS_DIGITS(B)).
 -define(IS_DIGITS(A, B, C, D), ?IS_DIGITS(A, B), ?IS_DIGITS(C, D)).
 
--define(DIGITS_TO_INTEGER(A), (A - $0)).
--define(DIGITS_TO_INTEGER(A, B), (?DIGITS_TO_INTEGER(A) * 10 + ?DIGITS_TO_INTEGER(B))).
--define(DIGITS_TO_INTEGER(A, B, C, D), (?DIGITS_TO_INTEGER(A, B) * 100 + ?DIGITS_TO_INTEGER(C, D))).
+-compile({inline, [digits_to_integer/1, digits_to_integer/2, digits_to_integer/4]}).
 
 %%%===================================================================
 %%% Types
@@ -274,6 +272,29 @@ format_offset({Hours, Minutes}) ->
          false -> [$+, format2(Hours)]
      end, $:, format2(Minutes)].
 
+%%%===================================================================
+%%% Internal functions
+%%%===================================================================
+
+-spec digits_to_integer(48..57) -> 0..9.
+
+digits_to_integer(A) -> A - $0.
+
+%%--------------------------------------------------------------------
+
+-spec digits_to_integer(48..57, 48..57) -> 0..99.
+
+digits_to_integer(A, B) ->
+    digits_to_integer(A) * 10 + digits_to_integer(B).
+
+%%--------------------------------------------------------------------
+
+-spec digits_to_integer(48..57, 48..57, 48..57, 48..57) -> 0..9999.
+
+digits_to_integer(A, B, C, D) ->
+    digits_to_integer(A) * 1000 + digits_to_integer(B) * 100 +
+        digits_to_integer(C) * 10 + digits_to_integer(D).
+
 %%--------------------------------------------------------------------
 
 -spec parse_date(binary(), fun()) -> no_return().
@@ -286,9 +307,9 @@ parse_date(<<Y3, Y2, Y1, Y0, $-,
   when ?IS_DIGITS(Y3, Y2, Y1, Y0),
        ?IS_DIGITS(M1, M0),
        ?IS_DIGITS(D1, D0) ->
-    Date = {?DIGITS_TO_INTEGER(Y3, Y2, Y1, Y0),
-            ?DIGITS_TO_INTEGER(M1, M0),
-            ?DIGITS_TO_INTEGER(D1, D0)},
+    Date = {digits_to_integer(Y3, Y2, Y1, Y0),
+            digits_to_integer(M1, M0),
+            digits_to_integer(D1, D0)},
     case calendar:valid_date(Date) of
         true -> Cont(Str, Date);
         false -> throw(baddate)
@@ -308,9 +329,9 @@ parse_time(<<H1, H0, $:,
   when ?IS_DIGITS(H1, H0),
        ?IS_DIGITS(M1, M0),
        ?IS_DIGITS(S1, S0) ->
-    case {?DIGITS_TO_INTEGER(H1, H0),
-          ?DIGITS_TO_INTEGER(M1, M0),
-          ?DIGITS_TO_INTEGER(S1, S0)} of
+    case {digits_to_integer(H1, H0),
+          digits_to_integer(M1, M0),
+          digits_to_integer(S1, S0)} of
         Time = {Hour, Minute, Second}
           when Hour =< 23, Minute =< 59, Second =< 59;
                Hour =:= 23, Minute =:= 59, Second =:= 60 -> Cont(Str, Time);
@@ -347,8 +368,8 @@ parse_offset(<<"-00:00", Str/bytes>>, Cont) -> Cont(Str, undefined);
 parse_offset(<<Sign, H1, H0, $:, M1, M0, Str/bytes>>, Cont)
   when ?IS_DIGITS(H1, H0),
        ?IS_DIGITS(M1, M0) ->
-    case {?DIGITS_TO_INTEGER(H1, H0),
-          ?DIGITS_TO_INTEGER(M1, M0)} of
+    case {digits_to_integer(H1, H0),
+          digits_to_integer(M1, M0)} of
         {Hour, Minute}
           when Hour =< 23, Minute =< 59 ->
             case Sign of
