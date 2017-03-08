@@ -126,51 +126,43 @@ parse_datetime(Str) ->
                                    fraction() | undefined}.
 
 parse_local_datetime(Str) when is_binary(Str) ->
-    parse_date(
-      Str,
-      fun(<<Sep, TimeStr/bytes>>, Date)
-            when Sep =:= $T; Sep =:= $t; Sep =:= $\s ->
-              parse_time(
-                TimeStr,
-                fun(<<$., FracStr/bytes>>, Time) ->
-                        parse_frac(
-                          FracStr,
-                          fun(OffsetStr, {FracLen, RawFrac}) ->
-                                  {Frac, Unit} =
-                                      case FracLen of
-                                          %% FIXME
-                                          1 -> {RawFrac * 100, millisecond};
-                                          2 -> {RawFrac * 10, millisecond};
-                                          3 -> {RawFrac, millisecond};
-                                          4 -> {RawFrac * 100, microsecond};
-                                          5 -> {RawFrac * 10, microsecond};
-                                          6 -> {RawFrac, microsecond};
-                                          7 -> {RawFrac * 100, nanosecond};
-                                          8 -> {RawFrac * 10, nanosecond};
-                                          9 -> {RawFrac, nanosecond};
-                                          _ -> throw(badfrac)
-                                      end,
-                                  parse_offset(
-                                    OffsetStr,
-                                    fun(_EmptyStr = <<>>, Offset) -> {{Date, Time}, Offset, {Frac, Unit}};
-                                       (_StrLeft, _Offset) -> throw(badarg)
-                                    end
-                                   )
-                          end
-                         );
-                   (OffsetStr, Time) ->
-                        Frac = undefined,
-                        parse_offset(
-                          OffsetStr,
-                          fun(_EmptyStr = <<>>, Offset) -> {{Date, Time}, Offset, Frac};
-                             (_StrLeft, _Offset) -> throw(badarg)
-                          end
-                         )
-                end
-               );
-         (_BadStr, _Date) -> throw(badarg)
-      end
-     );
+    case parse_date_part(Str) of
+        {Date, <<Sep, TimeStr/bytes>>}
+          when Sep =:= $T;
+               Sep =:= $t;
+               Sep =:= $\s ->
+            case parse_time_part(TimeStr) of
+                {Time, <<$., FracStr/bytes>>} ->
+                    case parse_frac_part(FracStr) of
+                        {RawFrac, FracLen, OffsetStr} ->
+                            Frac =
+                                case FracLen of
+                                    %% FIXME
+                                    1 -> {RawFrac * 100, millisecond};
+                                    2 -> {RawFrac * 10, millisecond};
+                                    3 -> {RawFrac, millisecond};
+                                    4 -> {RawFrac * 100, microsecond};
+                                    5 -> {RawFrac * 10, microsecond};
+                                    6 -> {RawFrac, microsecond};
+                                    7 -> {RawFrac * 100, nanosecond};
+                                    8 -> {RawFrac * 10, nanosecond};
+                                    9 -> {RawFrac, nanosecond};
+                                    _ -> throw(badfrac)
+                                end,
+                            case parse_offset_part(OffsetStr) of
+                                {Offset, <<>>} -> {{Date, Time}, Offset, Frac};
+                                {_Offset, _StrLeft} -> throw(badarg)
+                            end
+                    end;
+                {Time, OffsetStr} ->
+                    Frac = undefined,
+                    case parse_offset_part(OffsetStr) of
+                        {Offset, <<>>} -> {{Date, Time}, Offset, Frac};
+                        {_Offset, _StrLeft} -> throw(badarg)
+                    end
+            end;
+        {_Date, _BadStr} -> throw(badarg)
+    end;
 
 parse_local_datetime(Str) when is_list(Str) ->
     parse_local_datetime(iolist_to_binary(Str)).
@@ -181,12 +173,10 @@ parse_local_datetime(Str) when is_list(Str) ->
 -spec parse_date(iodata()) -> date().
 
 parse_date(Str) when is_binary(Str) ->
-    parse_date(
-      Str,
-      fun(_EmptyStr = <<>>, Date) -> Date;
-         (_StrLeft, _Date) -> throw(badarg)
-      end
-     );
+    case parse_date_part(Str) of
+        {Date, <<>>} -> Date;
+        {_Date, _StrLeft} -> throw(badarg)
+    end;
 
 parse_date(Str) when is_list(Str) -> parse_date(iolist_to_binary(Str)).
 
@@ -196,12 +186,10 @@ parse_date(Str) when is_list(Str) -> parse_date(iolist_to_binary(Str)).
 -spec parse_time(iodata()) -> time().
 
 parse_time(Str) when is_binary(Str) ->
-    parse_time(
-      Str,
-      fun(_EmptyStr = <<>>, Time) -> Time;
-         (_StrLeft, _Time) -> throw(badarg)
-      end
-     );
+    case parse_time_part(Str) of
+        {Time, <<>>} -> Time;
+        {_Time, _StrLeft} -> throw(badarg)
+    end;
 
 parse_time(Str) when is_list(Str) -> parse_time(iolist_to_binary(Str)).
 
@@ -299,13 +287,12 @@ digits_to_integer(A, B, C, D) ->
 
 %%--------------------------------------------------------------------
 
--spec parse_date(binary(), fun()) -> no_return().
+-spec parse_date_part(binary()) -> {date(), binary()}.
 
-parse_date(<<Y3, Y2, Y1, Y0, $-,
-             M1, M0, $-,
-             D1, D0,
-             Str/bytes>>,
-           Cont)
+parse_date_part(<<Y3, Y2, Y1, Y0, $-,
+                 M1, M0, $-,
+                 D1, D0,
+                 Str/bytes>>)
   when ?IS_DIGITS(Y3, Y2, Y1, Y0),
        ?IS_DIGITS(M1, M0),
        ?IS_DIGITS(D1, D0) ->
@@ -313,21 +300,20 @@ parse_date(<<Y3, Y2, Y1, Y0, $-,
             digits_to_integer(M1, M0),
             digits_to_integer(D1, D0)},
     case calendar:valid_date(Date) of
-        true -> Cont(Str, Date);
+        true -> {Date, Str};
         false -> throw(baddate)
     end;
 
-parse_date(_BadStr, _Cont) -> throw(badarg).
+parse_date_part(_BadStr) -> throw(badarg).
 
 %%--------------------------------------------------------------------
 
--spec parse_time(binary(), fun()) -> no_return().
+-spec parse_time_part(binary()) -> {time(), binary()}.
 
-parse_time(<<H1, H0, $:,
-             M1, M0, $:,
-             S1, S0,
-             Str/bytes>>,
-           Cont)
+parse_time_part(<<H1, H0, $:,
+                 M1, M0, $:,
+                 S1, S0,
+                 Str/bytes>>)
   when ?IS_DIGITS(H1, H0),
        ?IS_DIGITS(M1, M0),
        ?IS_DIGITS(S1, S0) ->
@@ -336,38 +322,39 @@ parse_time(<<H1, H0, $:,
           digits_to_integer(S1, S0)} of
         Time = {Hour, Minute, Second}
           when Hour =< 23, Minute =< 59, Second =< 59;
-               Hour =:= 23, Minute =:= 59, Second =:= 60 -> Cont(Str, Time);
+               Hour =:= 23, Minute =:= 59, Second =:= 60 -> {Time, Str};
         _BadTime -> throw(badtime)
     end;
 
-parse_time(_BadStr, _Cont) -> throw(badarg).
+parse_time_part(_BadStr) -> throw(badarg).
 
 %%--------------------------------------------------------------------
 
--spec parse_frac(binary(), fun()) -> no_return().
+-spec parse_frac_part(binary()) -> {non_neg_integer(), pos_integer(), binary()}.
 
-parse_frac(Str, Cont) -> parse_frac(Str, _Ans = {0, 0}, Cont).
-
-%%--------------------------------------------------------------------
-
--spec parse_frac(binary(), term(), fun()) -> no_return().
-
-parse_frac(<<D, Str/bytes>>, {FracLen, Frac}, Cont) when ?IS_DIGITS(D) ->
-    parse_frac(Str, {FracLen + 1, 10 * Frac + (D - $0)}, Cont);
-
-parse_frac(Str, Ans = {FracLen, _Frac}, Cont) when FracLen > 0 -> Cont(Str, Ans);
-
-parse_frac(_Str, _Ans, _Cont) -> throw(badarg).
+parse_frac_part(Str) -> parse_frac_part(Str, _Frac = 0, _FracLen = 0).
 
 %%--------------------------------------------------------------------
 
--spec parse_offset(binary(), fun()) -> no_return().
+-spec parse_frac_part(binary(), non_neg_integer(), non_neg_integer()) ->
+                             {non_neg_integer(), pos_integer(), binary()}.
 
-parse_offset(<<Z, Str/bytes>>, Cont) when Z =:= $Z; Z =:= $z -> Cont(Str, {0, 0});
+parse_frac_part(<<D, Str/bytes>>, Frac, FracLen) when ?IS_DIGITS(D) ->
+    parse_frac_part(Str, 10 * Frac + (D - $0), FracLen + 1);
 
-parse_offset(<<"-00:00", Str/bytes>>, Cont) -> Cont(Str, undefined);
+parse_frac_part(Str, Frac, FracLen) when FracLen > 0 -> {Frac, FracLen, Str};
 
-parse_offset(<<Sign, H1, H0, $:, M1, M0, Str/bytes>>, Cont)
+parse_frac_part(_Str, _Frac, _FracLen) -> throw(badarg).
+
+%%--------------------------------------------------------------------
+
+-spec parse_offset_part(binary()) -> {offset() | undefined, binary()}.
+
+parse_offset_part(<<Z, Str/bytes>>) when Z =:= $Z; Z =:= $z -> {{0, 0}, Str};
+
+parse_offset_part(<<"-00:00", Str/bytes>>) -> {undefined, Str};
+
+parse_offset_part(<<Sign, H1, H0, $:, M1, M0, Str/bytes>>)
   when ?IS_DIGITS(H1, H0),
        ?IS_DIGITS(M1, M0) ->
     case {digits_to_integer(H1, H0),
@@ -375,14 +362,14 @@ parse_offset(<<Sign, H1, H0, $:, M1, M0, Str/bytes>>, Cont)
         {Hour, Minute}
           when Hour =< 23, Minute =< 59 ->
             case Sign of
-                $- -> Cont(Str, {-Hour, Minute});
-                $+ -> Cont(Str, {Hour, Minute});
+                $- -> {{-Hour, Minute}, Str};
+                $+ -> {{Hour, Minute}, Str};
                 _ -> throw(badarg)
             end;
         _BadOffset -> throw(badoffset)
     end;
 
-parse_offset(_BadStr, _Cont) -> throw(badarg).
+parse_offset_part(_BadStr) -> throw(badarg).
 
 %%--------------------------------------------------------------------
 
