@@ -458,7 +458,7 @@ remove_offset(DateTime, {Hours, Minutes}) ->
 
 %%--------------------------------------------------------------------
 
--spec system_seconds_to_datetime(non_neg_integer()) -> calendar:datetime().
+-spec system_seconds_to_datetime(non_neg_integer()) -> calendar:datetime1970().
 
 system_seconds_to_datetime(Seconds) ->
     Epoch = {{1970, 1, 1}, {0, 0, 0}},
