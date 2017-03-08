@@ -413,13 +413,17 @@ format_datetime_3_test_() ->
 
 format_local_datetime_2_test_() ->
     [ ?_assertEqual(<<"2016-06-20T09:38:15+03:00">>,
-                    iolist_to_binary(format_local_datetime({{2016, 06, 20}, {09, 38, 15}}, {3, 0}))),
+                    iolist_to_binary(format_local_datetime(
+                                       {{2016, 06, 20}, {09, 38, 15}}, {3, 0}))),
       ?_assertEqual(<<"2016-02-12T11:02:09-00:00">>,
-                    iolist_to_binary(format_local_datetime({{2016, 02, 12}, {11, 02, 09}}, undefined))),
+                    iolist_to_binary(format_local_datetime(
+                                       {{2016, 02, 12}, {11, 02, 09}}, undefined))),
       ?_assertEqual(<<"2016-02-12T01:02:03Z">>,
-                    iolist_to_binary(format_local_datetime({{2016, 02, 12}, {01, 02, 03}}, {0, 0}))),
+                    iolist_to_binary(format_local_datetime(
+                                       {{2016, 02, 12}, {01, 02, 03}}, {0, 0}))),
       ?_assertEqual(<<"9999-12-31T23:59:60+23:59">>,
-                    iolist_to_binary(format_local_datetime({{9999, 12, 31}, {23, 59, 60}}, {23, 59})))
+                    iolist_to_binary(format_local_datetime(
+                                       {{9999, 12, 31}, {23, 59, 60}}, {23, 59})))
     ].
 
 format_local_datetime_3_test_() ->
@@ -471,16 +475,26 @@ parse_datetime_1_test_() ->
       ?_assertThrow(badarg, parse_datetime(<<"2017-03-03T16:31:37.5238?00:00">>)),
       ?_assertMatch(Ans, parse_datetime(<<"2017-03-03T13:31:37.5238Z">>)),
       ?_assertMatch(Ans, parse_datetime(<<"2017-03-03t13:31:37.5238z">>)),
-      ?_assertMatch({DateTime, undefined}, parse_datetime(<<"2017-03-03T13:31:37Z">>)),
-      ?_assertMatch({DateTime, {100, millisecond}}, parse_datetime(<<"2017-03-03T13:31:37.1Z">>)),
-      ?_assertMatch({DateTime, {120, millisecond}}, parse_datetime(<<"2017-03-03T13:31:37.12Z">>)),
-      ?_assertMatch({DateTime, {123, millisecond}}, parse_datetime(<<"2017-03-03T13:31:37.123Z">>)),
-      ?_assertMatch({DateTime, {123400, microsecond}}, parse_datetime(<<"2017-03-03T13:31:37.1234Z">>)),
-      ?_assertMatch({DateTime, {123450, microsecond}}, parse_datetime(<<"2017-03-03T13:31:37.12345Z">>)),
-      ?_assertMatch({DateTime, {123456, microsecond}}, parse_datetime(<<"2017-03-03T13:31:37.123456Z">>)),
-      ?_assertMatch({DateTime, {123456700, nanosecond}}, parse_datetime(<<"2017-03-03T13:31:37.1234567Z">>)),
-      ?_assertMatch({DateTime, {123456780, nanosecond}}, parse_datetime(<<"2017-03-03T13:31:37.12345678Z">>)),
-      ?_assertMatch({DateTime, {123456789, nanosecond}}, parse_datetime(<<"2017-03-03T13:31:37.123456789Z">>)),
+      ?_assertMatch({DateTime, undefined},
+                    parse_datetime(<<"2017-03-03T13:31:37Z">>)),
+      ?_assertMatch({DateTime, {100, millisecond}},
+                    parse_datetime(<<"2017-03-03T13:31:37.1Z">>)),
+      ?_assertMatch({DateTime, {120, millisecond}},
+                    parse_datetime(<<"2017-03-03T13:31:37.12Z">>)),
+      ?_assertMatch({DateTime, {123, millisecond}},
+                    parse_datetime(<<"2017-03-03T13:31:37.123Z">>)),
+      ?_assertMatch({DateTime, {123400, microsecond}},
+                    parse_datetime(<<"2017-03-03T13:31:37.1234Z">>)),
+      ?_assertMatch({DateTime, {123450, microsecond}},
+                    parse_datetime(<<"2017-03-03T13:31:37.12345Z">>)),
+      ?_assertMatch({DateTime, {123456, microsecond}},
+                    parse_datetime(<<"2017-03-03T13:31:37.123456Z">>)),
+      ?_assertMatch({DateTime, {123456700, nanosecond}},
+                    parse_datetime(<<"2017-03-03T13:31:37.1234567Z">>)),
+      ?_assertMatch({DateTime, {123456780, nanosecond}},
+                    parse_datetime(<<"2017-03-03T13:31:37.12345678Z">>)),
+      ?_assertMatch({DateTime, {123456789, nanosecond}},
+                    parse_datetime(<<"2017-03-03T13:31:37.123456789Z">>)),
       ?_assertThrow(badfrac, parse_datetime(<<"2017-03-03T13:31:37.1234567890Z">>)),
       ?_assertThrow(badarg, parse_datetime(<<"2017-03-03T13:31:37.Z">>)),
       ?_assertThrow(badarg, parse_datetime(<<"2017-03-03T13:31:37.+123Z">>)),
