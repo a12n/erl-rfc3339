@@ -44,8 +44,7 @@
 -type fraction() :: 0..999999 | fraction_unit().
 
 -type date() :: {year(), month(), day()}.
--type time() :: {hour(), minute(), second()}
-              | {23, 59, 60}.                   % Allows leap second
+-type time() :: {hour(), minute(), second()}.
 -type datetime() :: {date(), time()}.
 
 -type offset() :: {-23..23, minute()}.
@@ -307,8 +306,9 @@ parse_time_part(<<H1, H0, $:,
           digits_to_integer(M1, M0),
           digits_to_integer(S1, S0)} of
         Time = {Hour, Minute, Second}
-          when Hour =< 23, Minute =< 59, Second =< 59;
-               Hour =:= 23, Minute =:= 59, Second =:= 60 -> {Time, Str};
+          when Hour =< 23, Minute =< 59, Second =< 59 -> {Time, Str};
+        {Hour, Minute, _LeapSecond = 60}
+          when Hour =< 23, Minute =< 59 -> {{Hour, Minute, 59}, Str};
         _BadTime -> throw(badtime)
     end;
 
@@ -419,9 +419,9 @@ format_local_datetime_2_test_() ->
       ?_assertEqual(<<"2016-02-12T01:02:03Z">>,
                     iolist_to_binary(format_local_datetime(
                                        {{2016, 02, 12}, {01, 02, 03}}, {0, 0}))),
-      ?_assertEqual(<<"9999-12-31T23:59:60+23:59">>,
+      ?_assertEqual(<<"9999-12-31T23:59:59+23:59">>,
                     iolist_to_binary(format_local_datetime(
-                                       {{9999, 12, 31}, {23, 59, 60}}, {23, 59})))
+                                       {{9999, 12, 31}, {23, 59, 59}}, {23, 59})))
     ].
 
 format_local_datetime_3_test_() ->
@@ -438,7 +438,7 @@ format_date_1_test_() ->
 
 format_time_1_test_() ->
     [ ?_assertEqual(<<"00:00:00">>, iolist_to_binary(format_time({0, 0, 0}))),
-      ?_assertEqual(<<"23:59:60">>, iolist_to_binary(format_time({23, 59, 60}))),
+      ?_assertEqual(<<"23:59:59">>, iolist_to_binary(format_time({23, 59, 59}))),
       ?_assertEqual(<<"09:38:15">>, iolist_to_binary(format_time({09, 38, 15}))) ].
 
 parse_date_1_test_() ->
@@ -459,8 +459,7 @@ parse_time_1_test_() ->
       ?_assertThrow(badarg, parse_time(<<"+2:+3:+7">>)),
       ?_assertEqual({22, 13, 57}, parse_time(<<"22:13:57">>)),
       ?_assertEqual({22, 13, 57}, parse_time(["22", $:, <<"13:">> | "57"])),
-      ?_assertEqual({23, 59, 60}, parse_time(<<"23:59:60">>)),
-      ?_assertThrow(badtime, parse_time(<<"09:38:60">>))
+      ?_assertEqual({23, 59, 59}, parse_time(<<"23:59:60">>))
     ].
 
 parse_datetime_1_test_() ->
