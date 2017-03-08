@@ -56,6 +56,7 @@
 %%% API
 %%%===================================================================
 
+%% @equiv format_local_datetime(DateTime, _Offset = {0, 0})
 -spec format_datetime(datetime()) -> iodata().
 
 format_datetime(DateTime) ->
@@ -63,6 +64,7 @@ format_datetime(DateTime) ->
 
 %%--------------------------------------------------------------------
 
+%% @equiv format_local_datetime(DateTime, _Offset = {0, 0}, Frac)
 -spec format_datetime(datetime(), fraction()) -> iodata().
 
 format_datetime(DateTime, Frac) ->
