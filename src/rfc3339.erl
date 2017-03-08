@@ -109,6 +109,7 @@ format_time(Time, Frac) ->
 
 %%--------------------------------------------------------------------
 
+%% @equiv format_system_time(SysTime, _Unit = native)
 -spec format_system_time(non_neg_integer()) -> iodata().
 
 format_system_time(SysTime) -> format_system_time(SysTime, native).
