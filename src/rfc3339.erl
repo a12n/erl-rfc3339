@@ -243,30 +243,30 @@ parse_time(Str) when is_list(Str) -> parse_time(iolist_to_binary(Str)).
 
 %%--------------------------------------------------------------------
 
-%% @throws error()
+%% @equiv parse_system_time(Str, _Unit = native)
 -spec parse_system_time(iodata()) -> {non_neg_integer(), erlang:time_unit()}.
 
-parse_system_time(Str) ->
-    case parse_datetime(Str) of
-        {{Date, Time}, Frac} when Date >= {1970, 1, 1} ->
-            SysTime = datetime_to_system_seconds({Date, Time}),
-            case Frac of
-                undefined -> {SysTime, seconds};
-                {N, millisecond} -> {SysTime * 1000 + N, milli_seconds};
-                {N, microsecond} -> {SysTime * 1000000 + N, micro_seconds};
-                {N, nanosecond} -> {SysTime * 1000000000 + N, nano_seconds}
-            end;
-        _PreEpoch -> throw(baddate)
-    end.
+parse_system_time(Str) -> parse_system_time(Str, native).
 
 %%--------------------------------------------------------------------
 
 %% @throws error()
 -spec parse_system_time(iodata(), erlang:time_unit()) -> non_neg_integer().
 
-parse_system_time(Str, ToUnit) ->
-    {SysTime, FromUnit} = parse_system_time(Str),
-    erlang:convert_time_unit(SysTime, FromUnit, ToUnit).
+parse_system_time(Str, Unit) ->
+    {SysTime, FromUnit} =
+        case parse_datetime(Str) of
+            {{Date, Time}, Frac} when Date >= {1970, 1, 1} ->
+                Seconds = datetime_to_system_seconds({Date, Time}),
+                case Frac of
+                    undefined -> {Seconds, seconds};
+                    {N, millisecond} -> {Seconds * 1000 + N, milli_seconds};
+                    {N, microsecond} -> {Seconds * 1000000 + N, micro_seconds};
+                    {N, nanosecond} -> {Seconds * 1000000000 + N, nano_seconds}
+                end;
+            _PreEpoch -> throw(baddate)
+        end,
+    erlang:convert_time_unit(SysTime, FromUnit, Unit).
 
 %%%===================================================================
 %%% Internal functions
@@ -640,10 +640,10 @@ format_system_time_2_test_() ->
     ].
 
 parse_system_time_1_test_() ->
-    [ ?_assertEqual({123, seconds}, parse_system_time(<<"1970-01-01T00:02:03Z">>)),
-      ?_assertEqual({123, milli_seconds}, parse_system_time(<<"1970-01-01T00:00:00.123Z">>)),
-      ?_assertEqual({123, micro_seconds}, parse_system_time(<<"1970-01-01T00:00:00.000123Z">>)),
-      ?_assertEqual({123, nano_seconds}, parse_system_time(<<"1970-01-01T00:00:00.000000123Z">>))
+    [ ?_assertEqual(123, parse_system_time(<<"1970-01-01T00:02:03Z">>, seconds)),
+      ?_assertEqual(123, parse_system_time(<<"1970-01-01T00:00:00.123Z">>, milli_seconds)),
+      ?_assertEqual(123, parse_system_time(<<"1970-01-01T00:00:00.000123Z">>, micro_seconds)),
+      ?_assertEqual(123, parse_system_time(<<"1970-01-01T00:00:00.000000123Z">>, nano_seconds))
     ].
 
 -endif.
