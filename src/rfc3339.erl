@@ -11,13 +11,15 @@
 -export([format_datetime/1, format_datetime/2,
          format_local_datetime/2, format_local_datetime/3,
          format_date/1,
-         format_time/1]).
+         format_time/1,
+         format_system_time/1, format_system_time/2]).
 
 %% API
 -export([parse_datetime/1,
          parse_local_datetime/1,
          parse_date/1,
-         parse_time/1]).
+         parse_time/1,
+         parse_system_time/1, parse_system_time/2]).
 
 -define(IS_DIGITS(A), A >= $0, A =< $9).
 -define(IS_DIGITS(A, B), ?IS_DIGITS(A), ?IS_DIGITS(B)).
@@ -105,6 +107,66 @@ format_time(_Time = {Hour, Minute, Second}) ->
 format_time(Time, Frac) ->
     [format_time(Time), $., format_fraction(Frac)].
 
+%%--------------------------------------------------------------------
+
+%% @equiv format_system_time(SysTime, _Unit = native)
+-spec format_system_time(non_neg_integer()) -> iodata().
+
+format_system_time(SysTime) -> format_system_time(SysTime, native).
+
+%%--------------------------------------------------------------------
+
+-spec format_system_time(non_neg_integer(), erlang:time_unit()) -> iodata().
+
+format_system_time(SysTime, 1) ->
+    format_datetime(system_seconds_to_datetime(SysTime));
+
+format_system_time(SysTime, 1000) ->
+    format_datetime(system_seconds_to_datetime(SysTime div 1000),
+                    _Frac = {SysTime rem 1000, millisecond});
+
+format_system_time(SysTime, 1000000) ->
+    format_datetime(system_seconds_to_datetime(SysTime div 1000000),
+                    _Frac = {SysTime rem 1000000, microsecond});
+
+format_system_time(SysTime, 1000000000) ->
+    format_datetime(system_seconds_to_datetime(SysTime div 1000000000),
+                    _Frac = {SysTime rem 1000000000, nanosecond});
+
+format_system_time(SysTime, native) ->
+    format_system_time(SysTime, erlang:convert_time_unit(1, seconds, native));
+
+format_system_time(SysTime, Unit)
+  when Unit =:= second;
+       Unit =:= seconds ->
+    format_system_time(SysTime, 1);
+
+format_system_time(SysTime, Unit)
+  when Unit =:= millisecond;
+       Unit =:= milli_seconds ->
+    format_system_time(SysTime, 1000);
+
+format_system_time(SysTime, Unit)
+  when Unit =:= microsecond;
+       Unit =:= micro_seconds ->
+    format_system_time(SysTime, 1000000);
+
+format_system_time(SysTime, Unit)
+  when Unit =:= nanosecond;
+       Unit =:= nano_seconds ->
+    format_system_time(SysTime, 1000000000);
+
+format_system_time(SysTime, PartsPerSecond) when PartsPerSecond < 1000 ->
+    format_system_time(erlang:convert_time_unit(SysTime, PartsPerSecond, 1000), 1000);
+
+format_system_time(SysTime, PartsPerSecond) when PartsPerSecond < 1000000 ->
+    format_system_time(erlang:convert_time_unit(SysTime, PartsPerSecond, 1000000), 1000000);
+
+format_system_time(SysTime, PartsPerSecond) when PartsPerSecond < 1000000000 ->
+    format_system_time(erlang:convert_time_unit(SysTime, PartsPerSecond, 1000000000), 1000000000);
+
+format_system_time(_SysTime, _Unit) -> error(badarg).
+
 %%%===================================================================
 %%% API
 %%%===================================================================
@@ -178,6 +240,33 @@ parse_time(Str) when is_binary(Str) ->
     end;
 
 parse_time(Str) when is_list(Str) -> parse_time(iolist_to_binary(Str)).
+
+%%--------------------------------------------------------------------
+
+%% @throws error()
+-spec parse_system_time(iodata()) -> {non_neg_integer(), erlang:time_unit()}.
+
+parse_system_time(Str) ->
+    case parse_datetime(Str) of
+        {{Date, Time}, Frac} when Date >= {1970, 1, 1} ->
+            SysTime = datetime_to_system_seconds({Date, Time}),
+            case Frac of
+                undefined -> {SysTime, seconds};
+                {N, millisecond} -> {SysTime * 1000 + N, milli_seconds};
+                {N, microsecond} -> {SysTime * 1000000 + N, micro_seconds};
+                {N, nanosecond} -> {SysTime * 1000000000 + N, nano_seconds}
+            end;
+        _PreEpoch -> throw(baddate)
+    end.
+
+%%--------------------------------------------------------------------
+
+%% @throws error()
+-spec parse_system_time(iodata(), erlang:time_unit()) -> non_neg_integer().
+
+parse_system_time(Str, ToUnit) ->
+    {SysTime, FromUnit} = parse_system_time(Str),
+    erlang:convert_time_unit(SysTime, FromUnit, ToUnit).
 
 %%%===================================================================
 %%% Internal functions
@@ -381,6 +470,25 @@ remove_offset(DateTime, {Hours, Minutes}) ->
           (Hours * 3600 + Minutes * 60)
      ).
 
+%%--------------------------------------------------------------------
+
+-spec datetime_to_system_seconds(calendar:datetime1970()) -> non_neg_integer().
+
+datetime_to_system_seconds(DateTime) ->
+    Epoch = {{1970, 1, 1}, {0, 0, 0}},
+    calendar:datetime_to_gregorian_seconds(DateTime) -
+        calendar:datetime_to_gregorian_seconds(Epoch).
+
+%%--------------------------------------------------------------------
+
+-spec system_seconds_to_datetime(non_neg_integer()) -> calendar:datetime1970().
+
+system_seconds_to_datetime(Seconds) ->
+    Epoch = {{1970, 1, 1}, {0, 0, 0}},
+    calendar:gregorian_seconds_to_datetime(
+      calendar:datetime_to_gregorian_seconds(Epoch) + Seconds
+     ).
+
 %%%===================================================================
 %%% Tests
 %%%===================================================================
@@ -518,6 +626,24 @@ parse_local_datetime_1_test_() ->
       ?_assertThrow(badoffset, parse_local_datetime(<<"2017-03-03T16:31:37+42:00">>)),
       ?_assertMatch({{{1985, 4, 12}, {23, 20, 50}}, {0, 0}, {520, millisecond}},
                     parse_local_datetime(<<"1985-04-12T23:20:50.52Z">>))
+    ].
+
+format_system_time_2_test_() ->
+    [ ?_assertEqual(<<"1970-01-01T00:02:03Z">>,
+                    iolist_to_binary(format_system_time(123, seconds))),
+      ?_assertEqual(<<"1970-01-01T00:00:00.123Z">>,
+                    iolist_to_binary(format_system_time(123, milli_seconds))),
+      ?_assertEqual(<<"1970-01-01T00:00:00.000123Z">>,
+                    iolist_to_binary(format_system_time(123, micro_seconds))),
+      ?_assertEqual(<<"1970-01-01T00:00:00.000000123Z">>,
+                    iolist_to_binary(format_system_time(123, nano_seconds)))
+    ].
+
+parse_system_time_1_test_() ->
+    [ ?_assertEqual({123, seconds}, parse_system_time(<<"1970-01-01T00:02:03Z">>)),
+      ?_assertEqual({123, milli_seconds}, parse_system_time(<<"1970-01-01T00:00:00.123Z">>)),
+      ?_assertEqual({123, micro_seconds}, parse_system_time(<<"1970-01-01T00:00:00.000123Z">>)),
+      ?_assertEqual({123, nano_seconds}, parse_system_time(<<"1970-01-01T00:00:00.000000123Z">>))
     ].
 
 -endif.

@@ -4,7 +4,7 @@ Erlang library to format and parse RFC 3339 dates and times.
 
 It has functions to format and parse dates, time of day, timestamps
 with UTC offset and millisecond, microseconds or nanosecond
-fractions. Leap seconds are handled.
+fractions, Erlang system time. Leap seconds are handled.
 
 Formatting doesn't use `io_lib:format` and thus is an order of
 magnitude faster (in Erlang 18) than straightforward `io_lib:format`
