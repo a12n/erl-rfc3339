@@ -630,4 +630,11 @@ format_system_time_2_test_() ->
                     iolist_to_binary(format_system_time(123, nano_seconds)))
     ].
 
+parse_system_time_1_test_() ->
+    [ ?_assertEqual({123, seconds}, parse_system_time(<<"1970-01-01T00:02:03Z">>)),
+      ?_assertEqual({123, milli_seconds}, parse_system_time(<<"1970-01-01T00:00:00.123Z">>)),
+      ?_assertEqual({123, micro_seconds}, parse_system_time(<<"1970-01-01T00:00:00.000123Z">>)),
+      ?_assertEqual({123, nano_seconds}, parse_system_time(<<"1970-01-01T00:00:00.000000123Z">>))
+    ].
+
 -endif.
