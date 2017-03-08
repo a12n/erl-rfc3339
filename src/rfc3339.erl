@@ -18,7 +18,8 @@
 -export([parse_datetime/1,
          parse_local_datetime/1,
          parse_date/1,
-         parse_time/1]).
+         parse_time/1,
+         parse_system_time/1]).
 
 -define(IS_DIGITS(A), A >= $0, A =< $9).
 -define(IS_DIGITS(A, B), ?IS_DIGITS(A), ?IS_DIGITS(B)).
@@ -264,6 +265,24 @@ parse_time(Str) when is_binary(Str) ->
      );
 
 parse_time(Str) when is_list(Str) -> parse_time(iolist_to_binary(Str)).
+
+%%--------------------------------------------------------------------
+
+%% @throws error()
+-spec parse_system_time(iodata()) -> {non_neg_integer(), erlang:time_unit()}.
+
+parse_system_time(Str) ->
+    case parse_datetime(Str) of
+        {{Date, Time}, Frac} when Date >= {1970, 1, 1} ->
+            SysTime = datetime_to_system_seconds({Date, Time}),
+            case Frac of
+                undefined -> {SysTime, seconds};
+                {N, millisecond} -> {SysTime * 1000 + N, milli_seconds};
+                {N, microsecond} -> {SysTime * 1000000 + N, micro_seconds};
+                {N, nanosecond} -> {SysTime * 1000000000 + N, nano_seconds}
+            end;
+        _PreEpoch -> throw(baddate)
+    end.
 
 %%%===================================================================
 %%% Internal functions
