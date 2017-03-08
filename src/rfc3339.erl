@@ -19,7 +19,7 @@
          parse_local_datetime/1,
          parse_date/1,
          parse_time/1,
-         parse_system_time/1]).
+         parse_system_time/1, parse_system_time/2]).
 
 -define(IS_DIGITS(A), A >= $0, A =< $9).
 -define(IS_DIGITS(A, B), ?IS_DIGITS(A), ?IS_DIGITS(B)).
@@ -284,6 +284,15 @@ parse_system_time(Str) ->
             end;
         _PreEpoch -> throw(baddate)
     end.
+
+%%--------------------------------------------------------------------
+
+%% @throws error()
+-spec parse_system_time(iodata(), erlang:time_unit()) -> non_neg_integer().
+
+parse_system_time(Str, ToUnit) ->
+    {SysTime, FromUnit} = parse_system_time(Str),
+    erlang:convert_time_unit(SysTime, FromUnit, ToUnit).
 
 %%%===================================================================
 %%% Internal functions
