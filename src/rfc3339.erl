@@ -134,21 +134,7 @@ parse_local_datetime(Str) when is_binary(Str) ->
             case parse_time_part(TimeStr) of
                 {Time, <<$., FracStr/bytes>>} ->
                     case parse_frac_part(FracStr) of
-                        {RawFrac, FracLen, OffsetStr} ->
-                            Frac =
-                                case FracLen of
-                                    %% FIXME
-                                    1 -> {RawFrac * 100, millisecond};
-                                    2 -> {RawFrac * 10, millisecond};
-                                    3 -> {RawFrac, millisecond};
-                                    4 -> {RawFrac * 100, microsecond};
-                                    5 -> {RawFrac * 10, microsecond};
-                                    6 -> {RawFrac, microsecond};
-                                    7 -> {RawFrac * 100, nanosecond};
-                                    8 -> {RawFrac * 10, nanosecond};
-                                    9 -> {RawFrac, nanosecond};
-                                    _ -> throw(badfrac)
-                                end,
+                        {Frac, OffsetStr} ->
                             case parse_offset_part(OffsetStr) of
                                 {Offset, <<>>} -> {{Date, Time}, Offset, Frac};
                                 {_Offset, _StrLeft} -> throw(badarg)
@@ -330,19 +316,31 @@ parse_time_part(_BadStr) -> throw(badarg).
 
 %%--------------------------------------------------------------------
 
--spec parse_frac_part(binary()) -> {non_neg_integer(), pos_integer(), binary()}.
+-spec parse_frac_part(binary()) -> {fraction(), binary()}.
 
 parse_frac_part(Str) -> parse_frac_part(Str, _Frac = 0, _FracLen = 0).
 
 %%--------------------------------------------------------------------
 
 -spec parse_frac_part(binary(), non_neg_integer(), non_neg_integer()) ->
-                             {non_neg_integer(), pos_integer(), binary()}.
+                             {fraction(), binary()}.
 
 parse_frac_part(<<D, Str/bytes>>, Frac, FracLen) when ?IS_DIGITS(D) ->
     parse_frac_part(Str, 10 * Frac + (D - $0), FracLen + 1);
 
-parse_frac_part(Str, Frac, FracLen) when FracLen > 0 -> {Frac, FracLen, Str};
+parse_frac_part(Str, Frac, FracLen) when FracLen > 0 ->
+    {case FracLen of
+         1 -> {Frac * 100, millisecond};
+         2 -> {Frac * 10, millisecond};
+         3 -> {Frac, millisecond};
+         4 -> {Frac * 100, microsecond};
+         5 -> {Frac * 10, microsecond};
+         6 -> {Frac, microsecond};
+         7 -> {Frac * 100, nanosecond};
+         8 -> {Frac * 10, nanosecond};
+         9 -> {Frac, nanosecond};
+         _ -> throw(badfrac)
+     end, Str};
 
 parse_frac_part(_Str, _Frac, _FracLen) -> throw(badarg).
 
