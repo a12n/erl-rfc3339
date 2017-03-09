@@ -178,7 +178,14 @@ parse_date(Str) when is_list(Str) -> parse_date(iolist_to_binary(Str)).
 
 %%--------------------------------------------------------------------
 
-%% @throws error()
+%% @doc
+%% Parse time of day. E.g., `{@module}:parse_time(<<"09:38:14">>)'
+%% will result in `{9, 38, 14}' term. Leap seconds are allowed with
+%% any valid hour and minute and mapped to second 59. Function throws
+%% atom `badarg' for syntactically incorrect input and throws
+%% `badtime' when invalid time value parsed.
+%% @end
+%% @throws badarg | badtime
 -spec parse_time(iodata()) -> time().
 
 parse_time(Str) when is_binary(Str) ->
