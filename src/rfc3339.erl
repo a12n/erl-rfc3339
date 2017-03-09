@@ -85,6 +85,11 @@ format_local_datetime(_DateTime = {Date, Time}, Offset, Frac) ->
 
 %%--------------------------------------------------------------------
 
+%% @doc
+%% Format date. E.g., `iolist_to_binary({@module}:format_date({2016,
+%% 6, 20}))' will result in `<<"2016-06-20">>'. Year value must be
+%% less than 10000. Function behaviour is undefined for invalid input.
+%% @end
 -spec format_date(date()) -> iodata().
 
 format_date(_Date = {Year, Month, Day}) ->
