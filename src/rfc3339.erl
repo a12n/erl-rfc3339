@@ -97,6 +97,12 @@ format_date(_Date = {Year, Month, Day}) ->
 
 %%--------------------------------------------------------------------
 
+%% @doc
+%% Format time of day. E.g.,
+%% `iolist_to_binary({@module}:format_time({9, 38, 14}))' will result
+%% in `<<"09:38:14">>' binary string. Function behaviour is undefined
+%% for invalid input values.
+%% @end
 -spec format_time(time()) -> iodata().
 
 format_time(_Time = {Hour, Minute, Second}) ->
