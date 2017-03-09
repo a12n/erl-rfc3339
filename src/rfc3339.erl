@@ -316,10 +316,10 @@ parse_time_part(<<H1, H0, $:,
     case {digits_to_integer(H1, H0),
           digits_to_integer(M1, M0),
           digits_to_integer(S1, S0)} of
+        {Hour, Minute, 60}
+          when Hour =< 23, Minute =< 59 -> {{Hour, Minute, 59}, Str};
         Time = {Hour, Minute, Second}
           when Hour =< 23, Minute =< 59, Second =< 59 -> {Time, Str};
-        {Hour, Minute, _LeapSecond = 60}
-          when Hour =< 23, Minute =< 59 -> {{Hour, Minute, 59}, Str};
         _BadTime -> throw(badtime)
     end;
 
