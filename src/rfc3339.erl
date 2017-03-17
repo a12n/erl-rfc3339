@@ -71,6 +71,9 @@ format_datetime(DateTime, Frac) ->
 
 %%--------------------------------------------------------------------
 
+%% @doc
+%% Format timestamp with UTC offset.
+%% @end
 -spec format_local_datetime(datetime(), offset() | undefined) -> iodata().
 
 format_local_datetime(_DateTime = {Date, Time}, Offset) ->
@@ -78,6 +81,9 @@ format_local_datetime(_DateTime = {Date, Time}, Offset) ->
 
 %%--------------------------------------------------------------------
 
+%% @doc
+%% Format timestamp with UTC offset and fraction of a second.
+%% @end
 -spec format_local_datetime(datetime(), offset() | undefined, fraction()) -> iodata().
 
 format_local_datetime(_DateTime = {Date, Time}, Offset, Frac) ->
@@ -165,6 +171,9 @@ parse_local_datetime(Str) when is_list(Str) ->
 
 %%--------------------------------------------------------------------
 
+%% @doc
+%% Parse date.
+%% @end
 %% @throws error()
 -spec parse_date(iodata()) -> date().
 
