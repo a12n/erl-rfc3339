@@ -73,6 +73,10 @@ format_datetime(DateTime, Frac) ->
 
 %%--------------------------------------------------------------------
 
+%% @doc
+%% Format timestamp with UTC offset. Function behaviour is undefined
+%% for invalid input values.
+%% @end
 -spec format_local_datetime(datetime(), offset() | undefined) -> iodata().
 
 format_local_datetime(_DateTime = {Date, Time}, Offset) ->
@@ -80,6 +84,10 @@ format_local_datetime(_DateTime = {Date, Time}, Offset) ->
 
 %%--------------------------------------------------------------------
 
+%% @doc
+%% Format timestamp with UTC offset and fraction of a second. Function
+%% behaviour is undefined for invalid input values.
+%% @end
 -spec format_local_datetime(datetime(), offset() | undefined, fraction()) -> iodata().
 
 format_local_datetime(_DateTime = {Date, Time}, Offset, Frac) ->
@@ -87,6 +95,11 @@ format_local_datetime(_DateTime = {Date, Time}, Offset, Frac) ->
 
 %%--------------------------------------------------------------------
 
+%% @doc
+%% Format date. E.g., `iolist_to_binary({@module}:format_date({2016,
+%% 6, 20}))' will result in `<<"2016-06-20">>'. Year value must be
+%% less than 10000. Function behaviour is undefined for invalid input.
+%% @end
 -spec format_date(date()) -> iodata().
 
 format_date(_Date = {Year, Month, Day}) ->
@@ -94,6 +107,12 @@ format_date(_Date = {Year, Month, Day}) ->
 
 %%--------------------------------------------------------------------
 
+%% @doc
+%% Format time of day. E.g.,
+%% `iolist_to_binary({@module}:format_time({9, 38, 14}))' will result
+%% in `<<"09:38:14">>' binary string. Function behaviour is undefined
+%% for invalid input values.
+%% @end
 -spec format_time(time()) -> iodata().
 
 format_time(_Time = {Hour, Minute, Second}) ->
@@ -170,7 +189,17 @@ format_system_time(_SysTime, _Unit) -> error(badarg).
 %%% API
 %%%===================================================================
 
+%% @doc
+%% Parse timestamp and convert it to UTC. Parsing with this function
+%% is equivalent to parsing with parse_local_datetime/1 and then
+%% compensating for UTC offset.
+%%
+%% For timestamps with unknown UTC offset (offset is "-00:00" in the
+%% source text, parsed as `undefined') conversion isn't possible and
+%% `badoffset' atom will be thrown.
+%% @end
 %% @throws error()
+%% @see parse_local_datetime/1
 -spec parse_datetime(iodata()) -> {datetime(), fraction() | undefined}.
 
 parse_datetime(Str) ->
@@ -181,6 +210,35 @@ parse_datetime(Str) ->
 
 %%--------------------------------------------------------------------
 
+%% @doc
+%% Parse timestamp with UTC offset.
+%%
+%% Date part of the timestamp must represent a valid date, or
+%% `baddate' atom will be thrown.
+%%
+%% Symbols "T", "t" and " " (space) are allowed as separators between
+%% date and time of day parts of the timestamp.
+%%
+%% For invalid time of day value atom `badtime' will be thrown. Leap
+%% seconds are allowed in the time of day part, along with any valid
+%% hour and minute and will be mapped to second 59. According to UTC,
+%% leap seconds are allowed only at end of month, but it seems
+%% impractical to implement such a check, and leap second at any hour
+%% and minute will be parsed and remapped to second 59.
+%%
+%% Fraction of a second is parsed with minimal fraction unit
+%% possible. E.g., fraction "52" will be parsed as `{520,
+%% millisecond}', fraction "5234" will be parsed as `{523400,
+%% microsecond}'. Sub-nanosecond fractions aren't supported for now
+%% and atom `badfrac' will be thrown. If timestamp doesn't have
+%% fraction of a second in the source text, fraction will be parsed as
+%% atom `undefined'.
+%%
+%% UTC offsets from "-23:59" to "+23:59" all considered to be valid and
+%% will be parsed. UTC offset "Z" (or "z") is parsed as zero offset
+%% `{0, 0}'. Unknown UTC offset (-00:00 in the source text) is parsed
+%% as atom `undefined'.
+%% @end
 %% @throws error()
 -spec parse_local_datetime(iodata()) ->
                                   {datetime(), offset() | undefined,
@@ -216,7 +274,13 @@ parse_local_datetime(Str) when is_list(Str) ->
 
 %%--------------------------------------------------------------------
 
-%% @throws error()
+%% @doc
+%% Parse date. E.g., `{@module}:parse_date(<<"2016-06-20">>)' will
+%% result in `{2016, 6, 20}' term. Function throws atom `badarg' for
+%% syntactically incorrect input and throws `baddate' when invalid
+%% date value parsed.
+%% @end
+%% @throws badarg | baddate
 -spec parse_date(iodata()) -> date().
 
 parse_date(Str) when is_binary(Str) ->
@@ -229,7 +293,17 @@ parse_date(Str) when is_list(Str) -> parse_date(iolist_to_binary(Str)).
 
 %%--------------------------------------------------------------------
 
-%% @throws error()
+%% @doc
+%% Parse time of day. E.g., `{@module}:parse_time(<<"09:38:14">>)'
+%% will result in `{9, 38, 14}' term. Function throws atom `badarg'
+%% for syntactically incorrect input and throws `badtime' when invalid
+%% time value parsed.
+%%
+%% Leap seconds are allowed along any valid hour and minute and will
+%% be mapped to second 59. E.g., term `{9, 38, 59}' will be result of
+%% `{@module}:parse_time(<<"09:38:60">>)'.
+%% @end
+%% @throws badarg | badtime
 -spec parse_time(iodata()) -> time().
 
 parse_time(Str) when is_binary(Str) ->
@@ -394,10 +468,10 @@ parse_time_part(<<H1, H0, $:,
     case {digits_to_integer(H1, H0),
           digits_to_integer(M1, M0),
           digits_to_integer(S1, S0)} of
+        {Hour, Minute, 60}
+          when Hour =< 23, Minute =< 59 -> {{Hour, Minute, 59}, Str};
         Time = {Hour, Minute, Second}
           when Hour =< 23, Minute =< 59, Second =< 59 -> {Time, Str};
-        {Hour, Minute, _LeapSecond = 60}
-          when Hour =< 23, Minute =< 59 -> {{Hour, Minute, 59}, Str};
         _BadTime -> throw(badtime)
     end;
 

@@ -1,5 +1,5 @@
 {application, rfc3339,
  [{description, "Functions to format and parse RFC 3339 dates and times."},
-  {vsn, "0.16.0"},
+  {vsn, "0.16.1"},
   {modules, []},
   {applications, [kernel, stdlib]}]}.
