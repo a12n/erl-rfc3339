@@ -146,6 +146,35 @@ parse_datetime(Str) ->
 
 %%--------------------------------------------------------------------
 
+%% @doc
+%% Parse timestamp with UTC offset.
+%%
+%% Date part of the timestamp must represent a valid date, or
+%% `baddate' atom will be throwed.
+%%
+%% Symbols "T", "t" and " " (space) are allowed as separators between
+%% date and time of day parts of the timestamp.
+%%
+%% For invalid time of day value atom `badtime' will be throwed. Leap
+%% seconds are allowed in the time of day part, along with any valid
+%% hour and minute and will be mapped to second 59. According to UTC,
+%% leap seconds are allowed only at end of month, but it seems
+%% impractical to implement such a check, and leap second at any hour
+%% and minute will be parsed and remapped to second 59.
+%%
+%% Fraction of a second is parsed with minimal fraction unit
+%% possible. E.g., fraction "52" will be parsed as `{520,
+%% millisecond}', fraction "5234" will be parsed as `{523400,
+%% microsecond}'. Sub-nanosecond fractions aren't supported for now
+%% and atom `badfrac' will be thrown. If timestamp doesn't have
+%% fraction of a second in the source text, fraction will be parsed as
+%% atom `undefined'.
+%%
+%% UTC offsets from "-23:59" to "+23:59" all considered to be valid and
+%% will be parsed. UTC offset "Z" (or "z") is parsed as zero offset
+%% `{0, 0}'. Unknown UTC offset (-00:00 in the source text) is parsed
+%% as atom `undefined'.
+%% @end
 %% @throws error()
 -spec parse_local_datetime(iodata()) ->
                                   {datetime(), offset() | undefined,
