@@ -218,7 +218,7 @@ parse_local_datetime(Str) when is_list(Str) ->
 %% syntactically incorrect input and throws `baddate' when invalid
 %% date value parsed.
 %% @end
-%% @throws error()
+%% @throws badarg | baddate
 -spec parse_date(iodata()) -> date().
 
 parse_date(Str) when is_binary(Str) ->
