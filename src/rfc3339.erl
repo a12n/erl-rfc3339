@@ -213,7 +213,10 @@ parse_local_datetime(Str) when is_list(Str) ->
 %%--------------------------------------------------------------------
 
 %% @doc
-%% Parse date.
+%% Parse date. E.g., `{@module}:parse_date(<<"2016-06-20">>)' will
+%% result in `{2016, 6, 20}' term. Function throws atom `badarg' for
+%% syntactically incorrect input and throws `baddate' when invalid
+%% date value parsed.
 %% @end
 %% @throws error()
 -spec parse_date(iodata()) -> date().
