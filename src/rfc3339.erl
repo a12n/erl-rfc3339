@@ -317,7 +317,7 @@ parse_time(Str) when is_list(Str) -> parse_time(iolist_to_binary(Str)).
 %%--------------------------------------------------------------------
 
 %% @equiv parse_system_time(Str, _Unit = native)
--spec parse_system_time(iodata()) -> {non_neg_integer(), erlang:time_unit()}.
+-spec parse_system_time(iodata()) -> non_neg_integer().
 
 parse_system_time(Str) -> parse_system_time(Str, native).
 
