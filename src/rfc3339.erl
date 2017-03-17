@@ -134,7 +134,7 @@ format_time(Time, Frac) ->
 %%
 %% For timestamps with unknown UTC offset (offset is "-00:00" in the
 %% source text, parsed as `undefined') conversion isn't possible and
-%% `badoffset' atom will be throwed.
+%% `badoffset' atom will be thrown.
 %% @end
 %% @throws error()
 %% @see parse_local_datetime/1
@@ -152,12 +152,12 @@ parse_datetime(Str) ->
 %% Parse timestamp with UTC offset.
 %%
 %% Date part of the timestamp must represent a valid date, or
-%% `baddate' atom will be throwed.
+%% `baddate' atom will be thrown.
 %%
 %% Symbols "T", "t" and " " (space) are allowed as separators between
 %% date and time of day parts of the timestamp.
 %%
-%% For invalid time of day value atom `badtime' will be throwed. Leap
+%% For invalid time of day value atom `badtime' will be thrown. Leap
 %% seconds are allowed in the time of day part, along with any valid
 %% hour and minute and will be mapped to second 59. According to UTC,
 %% leap seconds are allowed only at end of month, but it seems
