@@ -237,9 +237,9 @@ parse_date(Str) when is_list(Str) -> parse_date(iolist_to_binary(Str)).
 %% for syntactically incorrect input and throws `badtime' when invalid
 %% time value parsed.
 %%
-%% Leap seconds are allowed along any valid hour and minute and will
-%% be mapped to second 59. E.g., term `{9, 38, 59}' will be result of
-%% `{@module}:parse_time(<<"09:38:60">>)'.
+%% Leap seconds are allowed along with any valid hour and minute and
+%% will be mapped to second 59. E.g., term `{9, 38, 59}' will be
+%% result of `{@module}:parse_time(<<"09:38:60">>)'.
 %% @end
 %% @throws badarg | badtime
 -spec parse_time(iodata()) -> time().
