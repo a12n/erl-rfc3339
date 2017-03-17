@@ -125,7 +125,17 @@ format_time(Time, Frac) ->
 %%% API
 %%%===================================================================
 
+%% @doc
+%% Parse timestamp and convert it to UTC. Parsing with this function
+%% is equivalent to parsing with parse_local_datetime/1 and then
+%% compensating for UTC offset.
+%%
+%% For timestamps with unknown UTC offset (offset is "-00:00" in the
+%% source text, parsed as `undefined') conversion isn't possible and
+%% `badoffset' atom will be throwed.
+%% @end
 %% @throws error()
+%% @see parse_local_datetime/1
 -spec parse_datetime(iodata()) -> {datetime(), fraction() | undefined}.
 
 parse_datetime(Str) ->
