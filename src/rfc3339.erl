@@ -236,7 +236,7 @@ parse_datetime(Str) ->
 %%
 %% UTC offsets from "-23:59" to "+23:59" all considered to be valid and
 %% will be parsed. UTC offset "Z" (or "z") is parsed as zero offset
-%% `{0, 0}'. Unknown UTC offset (-00:00 in the source text) is parsed
+%% `{0, 0}'. Unknown UTC offset ("-00:00" in the source text) is parsed
 %% as atom `undefined'.
 %% @end
 %% @throws error()
@@ -299,9 +299,9 @@ parse_date(Str) when is_list(Str) -> parse_date(iolist_to_binary(Str)).
 %% for syntactically incorrect input and throws `badtime' when invalid
 %% time value parsed.
 %%
-%% Leap seconds are allowed along any valid hour and minute and will
-%% be mapped to second 59. E.g., term `{9, 38, 59}' will be result of
-%% `{@module}:parse_time(<<"09:38:60">>)'.
+%% Leap seconds are allowed along with any valid hour and minute and
+%% will be mapped to second 59. E.g., term `{9, 38, 59}' will be
+%% result of `{@module}:parse_time(<<"09:38:60">>)'.
 %% @end
 %% @throws badarg | badtime
 -spec parse_time(iodata()) -> time().
