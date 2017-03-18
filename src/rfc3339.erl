@@ -174,7 +174,7 @@ parse_datetime(Str) ->
 %%
 %% UTC offsets from "-23:59" to "+23:59" all considered to be valid and
 %% will be parsed. UTC offset "Z" (or "z") is parsed as zero offset
-%% `{0, 0}'. Unknown UTC offset (-00:00 in the source text) is parsed
+%% `{0, 0}'. Unknown UTC offset ("-00:00" in the source text) is parsed
 %% as atom `undefined'.
 %% @end
 %% @throws error()
