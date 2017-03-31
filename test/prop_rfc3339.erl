@@ -29,6 +29,7 @@ prop_format_parse_local_datetime() ->
                        rfc3339:format_local_datetime({Date, Time}, Offset, Frac)) =:=
                          {{Date, Time}, Offset, Frac})).
 
+-ifndef(pre18).
 prop_format_parse_system_time() ->
     ?FORALL({SysTime, Unit},
             {non_neg_integer(),
@@ -38,3 +39,4 @@ prop_format_parse_system_time() ->
                     nano_seconds,
                     native])},
             rfc3339:parse_system_time(rfc3339:format_system_time(SysTime, Unit), Unit) =:= SysTime).
+-endif. % pre18
