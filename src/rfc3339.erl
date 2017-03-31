@@ -11,14 +11,16 @@
 -export([format_datetime/1, format_datetime/2,
          format_local_datetime/2, format_local_datetime/3,
          format_date/1,
-         format_time/1,
-         format_system_time/1, format_system_time/2]).
+         format_time/1]).
 
 %% API
 -export([parse_datetime/1,
          parse_local_datetime/1,
          parse_date/1,
-         parse_time/1,
+         parse_time/1]).
+
+%% API
+-export([format_system_time/1, format_system_time/2,
          parse_system_time/1, parse_system_time/2]).
 
 -define(IS_DIGITS(A), A >= $0, A =< $9).
@@ -124,66 +126,6 @@ format_time(_Time = {Hour, Minute, Second}) ->
 
 format_time(Time, Frac) ->
     [format_time(Time), $., format_fraction(Frac)].
-
-%%--------------------------------------------------------------------
-
-%% @equiv format_system_time(SysTime, _Unit = native)
--spec format_system_time(non_neg_integer()) -> iodata().
-
-format_system_time(SysTime) -> format_system_time(SysTime, native).
-
-%%--------------------------------------------------------------------
-
--spec format_system_time(non_neg_integer(), erlang:time_unit()) -> iodata().
-
-format_system_time(SysTime, 1) ->
-    format_datetime(system_seconds_to_datetime(SysTime));
-
-format_system_time(SysTime, 1000) ->
-    format_datetime(system_seconds_to_datetime(SysTime div 1000),
-                    _Frac = {SysTime rem 1000, millisecond});
-
-format_system_time(SysTime, 1000000) ->
-    format_datetime(system_seconds_to_datetime(SysTime div 1000000),
-                    _Frac = {SysTime rem 1000000, microsecond});
-
-format_system_time(SysTime, 1000000000) ->
-    format_datetime(system_seconds_to_datetime(SysTime div 1000000000),
-                    _Frac = {SysTime rem 1000000000, nanosecond});
-
-format_system_time(SysTime, native) ->
-    format_system_time(SysTime, erlang:convert_time_unit(1, seconds, native));
-
-format_system_time(SysTime, Unit)
-  when Unit =:= second;
-       Unit =:= seconds ->
-    format_system_time(SysTime, 1);
-
-format_system_time(SysTime, Unit)
-  when Unit =:= millisecond;
-       Unit =:= milli_seconds ->
-    format_system_time(SysTime, 1000);
-
-format_system_time(SysTime, Unit)
-  when Unit =:= microsecond;
-       Unit =:= micro_seconds ->
-    format_system_time(SysTime, 1000000);
-
-format_system_time(SysTime, Unit)
-  when Unit =:= nanosecond;
-       Unit =:= nano_seconds ->
-    format_system_time(SysTime, 1000000000);
-
-format_system_time(SysTime, PartsPerSecond) when PartsPerSecond < 1000 ->
-    format_system_time(erlang:convert_time_unit(SysTime, PartsPerSecond, 1000), 1000);
-
-format_system_time(SysTime, PartsPerSecond) when PartsPerSecond < 1000000 ->
-    format_system_time(erlang:convert_time_unit(SysTime, PartsPerSecond, 1000000), 1000000);
-
-format_system_time(SysTime, PartsPerSecond) when PartsPerSecond < 1000000000 ->
-    format_system_time(erlang:convert_time_unit(SysTime, PartsPerSecond, 1000000000), 1000000000);
-
-format_system_time(_SysTime, _Unit) -> error(badarg).
 
 %%%===================================================================
 %%% API
@@ -313,6 +255,68 @@ parse_time(Str) when is_binary(Str) ->
     end;
 
 parse_time(Str) when is_list(Str) -> parse_time(iolist_to_binary(Str)).
+
+%%%===================================================================
+%%% API
+%%%===================================================================
+
+%% @equiv format_system_time(SysTime, _Unit = native)
+-spec format_system_time(non_neg_integer()) -> iodata().
+
+format_system_time(SysTime) -> format_system_time(SysTime, native).
+
+%%--------------------------------------------------------------------
+
+-spec format_system_time(non_neg_integer(), erlang:time_unit()) -> iodata().
+
+format_system_time(SysTime, 1) ->
+    format_datetime(system_seconds_to_datetime(SysTime));
+
+format_system_time(SysTime, 1000) ->
+    format_datetime(system_seconds_to_datetime(SysTime div 1000),
+                    _Frac = {SysTime rem 1000, millisecond});
+
+format_system_time(SysTime, 1000000) ->
+    format_datetime(system_seconds_to_datetime(SysTime div 1000000),
+                    _Frac = {SysTime rem 1000000, microsecond});
+
+format_system_time(SysTime, 1000000000) ->
+    format_datetime(system_seconds_to_datetime(SysTime div 1000000000),
+                    _Frac = {SysTime rem 1000000000, nanosecond});
+
+format_system_time(SysTime, native) ->
+    format_system_time(SysTime, erlang:convert_time_unit(1, seconds, native));
+
+format_system_time(SysTime, Unit)
+  when Unit =:= second;
+       Unit =:= seconds ->
+    format_system_time(SysTime, 1);
+
+format_system_time(SysTime, Unit)
+  when Unit =:= millisecond;
+       Unit =:= milli_seconds ->
+    format_system_time(SysTime, 1000);
+
+format_system_time(SysTime, Unit)
+  when Unit =:= microsecond;
+       Unit =:= micro_seconds ->
+    format_system_time(SysTime, 1000000);
+
+format_system_time(SysTime, Unit)
+  when Unit =:= nanosecond;
+       Unit =:= nano_seconds ->
+    format_system_time(SysTime, 1000000000);
+
+format_system_time(SysTime, PartsPerSecond) when PartsPerSecond < 1000 ->
+    format_system_time(erlang:convert_time_unit(SysTime, PartsPerSecond, 1000), 1000);
+
+format_system_time(SysTime, PartsPerSecond) when PartsPerSecond < 1000000 ->
+    format_system_time(erlang:convert_time_unit(SysTime, PartsPerSecond, 1000000), 1000000);
+
+format_system_time(SysTime, PartsPerSecond) when PartsPerSecond < 1000000000 ->
+    format_system_time(erlang:convert_time_unit(SysTime, PartsPerSecond, 1000000000), 1000000000);
+
+format_system_time(_SysTime, _Unit) -> error(badarg).
 
 %%--------------------------------------------------------------------
 
@@ -544,7 +548,9 @@ remove_offset(DateTime, {Hours, Minutes}) ->
           (Hours * 3600 + Minutes * 60)
      ).
 
-%%--------------------------------------------------------------------
+%%%===================================================================
+%%% Internal functions
+%%%===================================================================
 
 -spec datetime_to_system_seconds(calendar:datetime1970()) -> non_neg_integer().
 
