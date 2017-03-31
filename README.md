@@ -18,7 +18,7 @@ or commit identifier, do not track a branch. For `rebar` applications
 add something like this to the `deps` in `rebar.config`:
 
 ```
-{rfc3339, {hg, "https://bitbucket.org/a12n/erl-rfc3339", {ref, "63e8715"}}}
+{rfc3339, {hg, "https://bitbucket.org/a12n/erl-rfc3339", {tag, "0.16.2"}}}
 ```
 
 Build documentation with `make doc` command and view `doc/index.html`.
