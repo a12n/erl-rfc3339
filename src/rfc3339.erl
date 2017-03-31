@@ -19,9 +19,11 @@
          parse_date/1,
          parse_time/1]).
 
+-ifndef(pre18).
 %% API
 -export([format_system_time/1, format_system_time/2,
          parse_system_time/1, parse_system_time/2]).
+-endif.
 
 -define(IS_DIGITS(A), A >= $0, A =< $9).
 -define(IS_DIGITS(A, B), ?IS_DIGITS(A), ?IS_DIGITS(B)).
@@ -260,6 +262,8 @@ parse_time(Str) when is_list(Str) -> parse_time(iolist_to_binary(Str)).
 %%% API
 %%%===================================================================
 
+-ifndef(pre18).
+
 %% @equiv format_system_time(SysTime, _Unit = native)
 -spec format_system_time(non_neg_integer()) -> iodata().
 
@@ -344,6 +348,8 @@ parse_system_time(Str, Unit) ->
             _PreEpoch -> throw(baddate)
         end,
     erlang:convert_time_unit(SysTime, FromUnit, Unit).
+
+-endif. % pre18
 
 %%%===================================================================
 %%% Internal functions
@@ -552,6 +558,8 @@ remove_offset(DateTime, {Hours, Minutes}) ->
 %%% Internal functions
 %%%===================================================================
 
+-ifndef(pre18).
+
 -spec datetime_to_system_seconds(calendar:datetime1970()) -> non_neg_integer().
 
 datetime_to_system_seconds(DateTime) ->
@@ -568,6 +576,8 @@ system_seconds_to_datetime(Seconds) ->
     calendar:gregorian_seconds_to_datetime(
       calendar:datetime_to_gregorian_seconds(Epoch) + Seconds
      ).
+
+-endif. % pre18
 
 %%%===================================================================
 %%% Tests
@@ -707,6 +717,8 @@ parse_local_datetime_1_test_() ->
                     parse_local_datetime(<<"1985-04-12T23:20:50.52Z">>))
     ].
 
+-ifndef(pre18).
+
 format_system_time_2_test_() ->
     [ ?_assertEqual(<<"1970-01-01T00:02:03Z">>,
                     iolist_to_binary(format_system_time(123, seconds))),
@@ -724,5 +736,7 @@ parse_system_time_1_test_() ->
       ?_assertEqual(123, parse_system_time(<<"1970-01-01T00:00:00.000123Z">>, micro_seconds)),
       ?_assertEqual(123, parse_system_time(<<"1970-01-01T00:00:00.000000123Z">>, nano_seconds))
     ].
+
+-endif. % pre18
 
 -endif.
