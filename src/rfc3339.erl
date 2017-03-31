@@ -271,6 +271,9 @@ format_system_time(SysTime) -> format_system_time(SysTime, native).
 
 %%--------------------------------------------------------------------
 
+%% @doc
+%% Format Erlang system time.
+%% @end
 -spec format_system_time(non_neg_integer(), erlang:time_unit()) -> iodata().
 
 format_system_time(SysTime, 1) ->
@@ -331,6 +334,14 @@ parse_system_time(Str) -> parse_system_time(Str, native).
 
 %%--------------------------------------------------------------------
 
+%% @doc
+%% Parse Erlang system time. For timestamps prior to
+%% "1970-01-01T00:00:00Z" error atom `baddate' will be thrown, as
+%% there's no way to represent such timestamp as POSIX time.
+%% Conversion to requested time unit may result in accuracy
+%% loss. E.g., timestamp has nanosecond fraction and conversion to
+%% seconds was requested.
+%% @end
 %% @throws error()
 -spec parse_system_time(iodata(), erlang:time_unit()) -> non_neg_integer().
 
