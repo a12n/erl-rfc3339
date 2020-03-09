@@ -1,4 +1,3 @@
-REBAR != which rebar3
 REBAR ?= ./rebar3
 
 .PHONY: all clean distclean doc shell test
