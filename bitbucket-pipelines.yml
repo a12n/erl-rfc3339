@@ -1,8 +1,0 @@
-image: erlang:18
-
-pipelines:
-  branches:
-    default:
-      - step:
-          script:
-            - make test
